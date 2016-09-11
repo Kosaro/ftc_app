@@ -11,10 +11,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  * @version 9/10/16
  */
 public class Hardware506 extends Hardware {
-    DcMotor leftFrontMotor;
-    DcMotor rightFrontMotor;
-    DcMotor leftRearMotor;
-    DcMotor rightRearMotor;
+    DcMotorWrapper leftFrontMotor;
+    DcMotorWrapper rightFrontMotor;
+    DcMotorWrapper leftRearMotor;
+    DcMotorWrapper rightRearMotor;
 
     /**
      * Constructor initializes hardware map
@@ -27,17 +27,15 @@ public class Hardware506 extends Hardware {
 
     @Override
     public void initializeRobot() {
-        leftFrontMotor = (DcMotor) getDevice(dcMotor, "lf");
-        leftRearMotor = (DcMotor) getDevice(dcMotor, "lr");
-        rightFrontMotor = (DcMotor) getDevice(dcMotor, "rf");
-        rightRearMotor = (DcMotor) getDevice(dcMotor, "rr");
+        leftFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "lf"));
+        leftRearMotor = new DcMotorWrapper(getDevice(dcMotor, "lr"));
+        rightFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "rf"));
+        rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
 
-        if (leftFrontMotor != null) {
-            leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        }
-        if (leftRearMotor != null) {
-            leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        }
+        leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
     }
 
@@ -67,18 +65,9 @@ public class Hardware506 extends Hardware {
             rightFrontPower /= max;
             rightRearPower /= max;
         }
-
-        if (leftFrontMotor != null) {
-            leftFrontMotor.setPower(leftFrontPower);
-        }
-        if (leftRearMotor != null) {
-            leftRearMotor.setPower(leftRearPower);
-        }
-        if (rightFrontMotor != null) {
-            rightFrontMotor.setPower(rightFrontPower);
-        }
-        if (rightRearMotor != null) {
-            rightRearMotor.setPower(rightRearPower);
-        }
+        leftFrontMotor.setPower(leftFrontPower);
+        leftRearMotor.setPower(leftRearPower);
+        rightFrontMotor.setPower(rightFrontPower);
+        rightRearMotor.setPower(rightRearPower);
     }
 }
