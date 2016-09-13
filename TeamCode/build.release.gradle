@@ -1,7 +1,6 @@
 dependencies {
     compile project(':FtcRobotController')
     compile (name: 'RobotCore-release', ext: 'aar')
-    compile (name: 'Hardware506-release', ext: 'aar')
     compile (name: 'FtcCommon-release', ext: 'aar')
     compile (name:'ModernRobotics-release', ext:'aar')
     compile (name:'Analytics-release', ext:'aar')
