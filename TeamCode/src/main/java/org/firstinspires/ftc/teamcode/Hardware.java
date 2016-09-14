@@ -10,6 +10,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.Range;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Abstract hardware class that defines required/useful universal methods
  *
@@ -19,6 +22,7 @@ import com.qualcomm.robotcore.util.Range;
 public abstract class Hardware {
 
     private HardwareMap hardwareMap;
+    public TelemetryArrayList telemetry;
 
     /**
      * Constructor initializes hardware map
@@ -27,7 +31,7 @@ public abstract class Hardware {
      */
     public Hardware(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
-        getDevice(hardwareMap.dcMotor, "fr");
+        telemetry = new TelemetryArrayList();
         initializeHardwareMap();
     }
 
@@ -51,6 +55,10 @@ public abstract class Hardware {
             DbgLog.error("Device not found: " + name);
             return null;
         }
+    }
+
+    public void addTelemetry(String key, String data) {
+
     }
 
     /**
@@ -264,11 +272,11 @@ public abstract class Hardware {
         }
     }
 
-    public class UltrasonicSensorWrapper{
+    public class UltrasonicSensorWrapper {
         UltrasonicSensor sensor;
 
 
-        UltrasonicSensorWrapper(HardwareDevice device){
+        UltrasonicSensorWrapper(HardwareDevice device) {
             try {
                 this.sensor = (UltrasonicSensor) device;
             } catch (Exception e) {
@@ -276,8 +284,8 @@ public abstract class Hardware {
             }
         }
 
-        public double getUltrasonicLevel (){
-            if (sensor != null){
+        public double getUltrasonicLevel() {
+            if (sensor != null) {
                 return sensor.getUltrasonicLevel();
             }
             return -1;
@@ -336,6 +344,46 @@ public abstract class Hardware {
             if (sensor != null) {
                 sensor.resetDeviceConfigurationForOpMode();
             }
+        }
+    }
+
+    private class TelemetryArrayList {
+        List<String> keys;
+        List<String> msgs;
+
+        TelemetryArrayList() {
+            keys = new ArrayList<String>();
+            msgs = new ArrayList<String>();
+        }
+
+        public void addData(String key, String msg) {
+            for (int i = 0; i < keys.size(); i++) {
+                if (keys.get(i).equals(key)) {
+                    msgs.set(i, msg);
+                    return;
+                }
+            }
+            keys.add(key);
+            msgs.add(msg);
+        }
+
+        public void clear(){
+            keys.clear();
+            msgs.clear();
+        }
+
+
+        /**
+         * Returns two column 2D array with telemetry. 0th column is keys, 1st column is messages
+         * @return telemetry array
+         */
+        public String[][] getTelemetry(){
+            String[][] telemetry = new String[2][keys.size()];
+            for (int i = 0; i < telemetry[0].length; i++){
+                telemetry[0][i] = keys.get(i);
+                telemetry[1][i] = msgs.get(i);
+            }
+            return telemetry;
         }
     }
 }
