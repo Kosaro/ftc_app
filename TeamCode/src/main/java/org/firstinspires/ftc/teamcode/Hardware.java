@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.Range;
 
 /**
@@ -259,6 +260,81 @@ public abstract class Hardware {
         public void resetDeviceConfigurationForOpMode() {
             if (motor != null) {
                 motor.resetDeviceConfigurationForOpMode();
+            }
+        }
+    }
+
+    public class UltrasonicSensorWrapper{
+        UltrasonicSensor sensor;
+
+
+        UltrasonicSensorWrapper(HardwareDevice device){
+            try {
+                this.sensor = (UltrasonicSensor) device;
+            } catch (Exception e) {
+                this.sensor = null;
+            }
+        }
+
+        public double getUltrasonicLevel (){
+            if (sensor != null){
+                return sensor.getUltrasonicLevel();
+            }
+            return -1;
+        }
+
+        public String toString() {
+            if (sensor != null) {
+                return sensor.toString();
+            }
+            return null;
+        }
+
+        public String getConnectionInfo() {
+            if (sensor != null) {
+                return sensor.getConnectionInfo();
+            }
+            return null;
+        }
+
+        public int getVersion() {
+            if (sensor != null) {
+                return sensor.getVersion();
+            }
+            return 0;
+        }
+
+        public int hashCode() {
+            if (sensor != null) {
+                return sensor.hashCode();
+            }
+            return 0;
+        }
+
+        public String status() {
+            if (sensor != null) {
+                return sensor.status();
+            }
+            return "Ultrasonic sensor is null";
+        }
+
+        public String getDeviceName() {
+            if (sensor != null) {
+                return sensor.getDeviceName();
+            }
+            return "Ultrasonic sensor is null";
+        }
+
+        public HardwareDevice.Manufacturer getManufacturer() {
+            if (sensor != null) {
+                return sensor.getManufacturer();
+            }
+            return null;
+        }
+
+        public void resetDeviceConfigurationForOpMode() {
+            if (sensor != null) {
+                sensor.resetDeviceConfigurationForOpMode();
             }
         }
     }
