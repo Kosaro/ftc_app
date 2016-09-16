@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
  * Simple teleop for testing Drivetrain with mecanum/tank drive. Toggle with start button on gamepad 1
  * @author Oscar Kosar-Kosarewicz
  * @version 9/12/16
  */
+@TeleOp(name="Simple TeleOp", group="Iterative Opmode")
 public class SimpleTeleOp506 extends OpMode{
 
     Hardware506 robot;

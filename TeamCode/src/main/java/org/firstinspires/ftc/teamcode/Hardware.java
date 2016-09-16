@@ -1,13 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.ftccommon.DbgLog;
-import com.qualcomm.ftccommon.Device;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import java.util.ArrayList;
@@ -17,12 +16,14 @@ import java.util.List;
  * Abstract hardware class that defines required/useful universal methods
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 9/10/16
+ * @version 9/13/16
  */
 public abstract class Hardware {
 
     private HardwareMap hardwareMap;
     public TelemetryArrayList telemetry;
+
+    public static final String VUFORIA_LICENSE_KEY = "AdYQ1UT/////AAAAGduICslDnEnttzNkRGI2spxKjPBtdo/7cWrldv0MqHAmbK0Fyjw65zsW4JCkN6GRGjkwkLLX4kMkfjY2j/7K9K74AA1RRn1QaxpqfHqWfPXudWPzt4Y3PaLHK5c6ge6m6PyDYTZMxZmgb2jS5JaR0KPUf8Vmu1ysEOZfSNcSC20G56QRO/9VpJRrfetFMlsDiAwmsj+muYdKN5fwRCW3N8KK7CVD2ad9mXKvv45082O9PL0zXxq1vYPeKmn/27V1ihKOI0JHL5vEIeN3XeA56SM1f7yiLk2LFmkY+sM6K+HaDL+wLIulcuUIidqZ0xwKFFHCPjssVaZ25RtHYUY4nIvS+LJdzO+FdTYNDqtOn95Q";
 
     /**
      * Constructor initializes hardware map
@@ -273,7 +274,8 @@ public abstract class Hardware {
     }
 
     public class UltrasonicSensorWrapper {
-        UltrasonicSensor sensor;
+        private UltrasonicSensor sensor;
+        private CalculateUltrasonicMedianValue calcMedianThread;
 
 
         UltrasonicSensorWrapper(HardwareDevice device) {
@@ -281,6 +283,69 @@ public abstract class Hardware {
                 this.sensor = (UltrasonicSensor) device;
             } catch (Exception e) {
                 this.sensor = null;
+            }
+        }
+
+        private class CalculateUltrasonicMedianValue implements Runnable {
+            int intervalMiliSeconds;
+            ElapsedTime elapsedTime;
+            List<Double> values;
+            boolean isThreadStopped;
+            double value;
+
+            CalculateUltrasonicMedianValue(int intervalMiliSeconds) {
+                this.intervalMiliSeconds = intervalMiliSeconds;
+                elapsedTime = new ElapsedTime();
+                values = new ArrayList<>();
+                isThreadStopped = false;
+                value = getUltrasonicLevel();
+            }
+
+
+            public void run() {
+                elapsedTime.reset();
+                while (!isThreadStopped) {
+                    values.add(getUltrasonicLevel());
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (elapsedTime.milliseconds() > intervalMiliSeconds) {
+                        value = findMedianOfDoubleList(values);
+                        elapsedTime.reset();
+                        values.clear();
+                    }
+                }
+            }
+
+            public double getValue() {
+                return value;
+            }
+
+            public void stopThread() {
+                isThreadStopped = true;
+
+            }
+        }
+
+
+        public double getUltrasonicLevelMedian() {
+            if (sensor != null) {
+                if (calcMedianThread == null) {
+                    calcMedianThread = new CalculateUltrasonicMedianValue(200);
+                    calcMedianThread.run();
+                }
+                return calcMedianThread.getValue();
+            }
+            return -1;
+        }
+
+        public void stopMedianCalculatingThread(){
+            if (sensor != null) {
+                if (calcMedianThread != null) {
+                    calcMedianThread.stopThread();
+                }
             }
         }
 
@@ -367,7 +432,7 @@ public abstract class Hardware {
             msgs.add(msg);
         }
 
-        public void clear(){
+        public void clear() {
             keys.clear();
             msgs.clear();
         }
@@ -375,15 +440,28 @@ public abstract class Hardware {
 
         /**
          * Returns two column 2D array with telemetry. 0th column is keys, 1st column is messages
+         *
          * @return telemetry array
          */
-        public String[][] getTelemetry(){
+        public String[][] getTelemetry() {
             String[][] telemetry = new String[2][keys.size()];
-            for (int i = 0; i < telemetry[0].length; i++){
+            for (int i = 0; i < telemetry[0].length; i++) {
                 telemetry[0][i] = keys.get(i);
                 telemetry[1][i] = msgs.get(i);
             }
             return telemetry;
         }
+    }
+
+    public static double findMedianOfDoubleList(List<Double> list) {
+        if (list != null && list.size() > 0) {
+            int middleIndex = list.size() / 2;
+            if (list.size() % 2.0 == 0) {
+                return (list.get(middleIndex) + list.get(middleIndex - 1)) / 2.0;
+            } else {
+                return list.get(middleIndex);
+            }
+        }
+        return -1;
     }
 }

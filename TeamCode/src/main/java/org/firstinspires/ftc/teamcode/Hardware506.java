@@ -15,6 +15,8 @@ public class Hardware506 extends Hardware {
     DcMotorWrapper rightFrontMotor;
     DcMotorWrapper leftRearMotor;
     DcMotorWrapper rightRearMotor;
+    UltrasonicSensorWrapper leftUltrasonic;
+    UltrasonicSensorWrapper rightUltrasonic;
 
     /**
      * Constructor initializes hardware map
@@ -31,6 +33,8 @@ public class Hardware506 extends Hardware {
         leftRearMotor = new DcMotorWrapper(getDevice(dcMotor, "lr"));
         rightFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "rf"));
         rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
+        leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
+        rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -69,5 +73,16 @@ public class Hardware506 extends Hardware {
         leftRearMotor.setPower(leftRearPower);
         rightFrontMotor.setPower(rightFrontPower);
         rightRearMotor.setPower(rightRearPower);
+    }
+
+    public void setDriveMotorMode(DcMotor.RunMode runMode){
+        leftFrontMotor.setMode(runMode);
+        leftRearMotor.setMode(runMode);
+        rightRearMotor.setMode(runMode);
+        rightFrontMotor.setMode(runMode);
+    }
+
+    public double getUltrasonicAverageDistance(){
+        return (leftUltrasonic.getUltrasonicLevelMedian() + rightUltrasonic.getUltrasonicLevelMedian()) / 2;
     }
 }
