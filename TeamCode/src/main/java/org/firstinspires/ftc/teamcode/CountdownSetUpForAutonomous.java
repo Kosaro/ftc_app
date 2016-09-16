@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * Sets wait time during initialization for autonomous
+ * a on gamepad to increase wait period and b to decrease it
  * @author Oscar Kosar-Kosarewicz
  * @version 9/13/16
  */

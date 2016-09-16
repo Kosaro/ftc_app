@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.ftccommon.DbgLog;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -410,6 +413,124 @@ public abstract class Hardware {
                 sensor.resetDeviceConfigurationForOpMode();
             }
         }
+    }
+
+    public class ColorSensorWrapper{
+        ColorSensor sensor;
+
+        ColorSensorWrapper(HardwareDevice device) {
+            try {
+                this.sensor = (ColorSensor) device;
+            } catch (Exception e) {
+                this.sensor = null;
+            }
+        }
+
+        public int alpha(){
+            if (sensor != null) {
+                return sensor.alpha();
+            }
+            return -1;
+        }
+
+        public int blue(){
+            if (sensor != null) {
+                return sensor.blue();
+            }
+            return -1;
+        }
+
+        public int red(){
+            if (sensor != null) {
+                return sensor.red();
+            }
+            return -1;
+        }
+
+        public int green(){
+            if (sensor != null) {
+                return sensor.green();
+            }
+            return -1;
+        }
+
+        public int argb(){
+            if (sensor != null) {
+                return sensor.argb();
+            }
+            return -1;
+        }
+
+        public void enableLed (boolean isLedEnabled){
+            if (sensor != null) {
+                sensor.enableLed(isLedEnabled);
+            }
+        }
+
+        public I2cAddr getI2CAddress (boolean isLedEnabled){
+            if (sensor != null) {
+                sensor.getI2cAddress();
+            }
+            return null;
+        }
+
+        public void setI2CAddress (I2cAddr addr){
+            if (sensor != null) {
+                sensor.setI2cAddress(addr);
+            }
+        }
+
+
+        public String toString() {
+            if (sensor != null) {
+                return sensor.toString();
+            }
+            return null;
+        }
+
+        public String getConnectionInfo() {
+            if (sensor != null) {
+                return sensor.getConnectionInfo();
+            }
+            return null;
+        }
+
+        public int getVersion() {
+            if (sensor != null) {
+                return sensor.getVersion();
+            }
+            return 0;
+        }
+
+        public int hashCode() {
+            if (sensor != null) {
+                return sensor.hashCode();
+            }
+            return 0;
+        }
+
+
+        public String getDeviceName() {
+            if (sensor != null) {
+                return sensor.getDeviceName();
+            }
+            return "Color sensor is null";
+        }
+
+        public HardwareDevice.Manufacturer getManufacturer() {
+            if (sensor != null) {
+                return sensor.getManufacturer();
+            }
+            return null;
+        }
+
+        public void resetDeviceConfigurationForOpMode() {
+            if (sensor != null) {
+                sensor.resetDeviceConfigurationForOpMode();
+            }
+        }
+
+
     }
 
     private class TelemetryArrayList {
