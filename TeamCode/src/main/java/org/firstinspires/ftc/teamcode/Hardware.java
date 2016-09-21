@@ -5,6 +5,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cAddr;
@@ -485,7 +486,7 @@ public abstract class Hardware {
             if (sensor != null) {
                 return sensor.toString();
             }
-            return null;
+            return "Color sensor is null";
         }
 
         public String getConnectionInfo() {
@@ -515,6 +516,131 @@ public abstract class Hardware {
                 return sensor.getDeviceName();
             }
             return "Color sensor is null";
+        }
+
+        public HardwareDevice.Manufacturer getManufacturer() {
+            if (sensor != null) {
+                return sensor.getManufacturer();
+            }
+            return null;
+        }
+
+        public void resetDeviceConfigurationForOpMode() {
+            if (sensor != null) {
+                sensor.resetDeviceConfigurationForOpMode();
+            }
+        }
+
+
+    }
+
+    public class GyroSensorWrapper{
+        GyroSensor sensor;
+
+        GyroSensorWrapper(HardwareDevice device) {
+            try {
+                this.sensor = (GyroSensor) device;
+            } catch (Exception e) {
+                this.sensor = null;
+            }
+        }
+
+        public int getHeading(){
+            if (sensor != null) {
+                return sensor.getHeading();
+            }
+            return -1;
+        }
+
+        public int rawX(){
+            if (sensor != null) {
+                return sensor.rawX();
+            }
+            return -1;
+        }
+
+        public int rawY(){
+            if (sensor != null) {
+                return sensor.rawY();
+            }
+            return -1;
+        }
+
+        public int rawZ(){
+            if (sensor != null) {
+                return sensor.rawZ();
+            }
+            return -1;
+        }
+
+        public double getRotationFraction(){
+            if (sensor != null) {
+                return sensor.getRotationFraction();
+            }
+            return -1;
+        }
+
+        public boolean isCalibrating(){
+            if (sensor != null) {
+                return sensor.isCalibrating();
+            }
+            return false;
+        }
+
+        public void calibrate (){
+            if (sensor != null) {
+                sensor.calibrate();
+            }
+        }
+
+        public void resetZAxisIntegrator (){
+            if (sensor != null) {
+                sensor.resetZAxisIntegrator();
+            }
+        }
+
+        public String status (){
+            if (sensor != null) {
+                return sensor.status();
+            }
+            return null;
+        }
+
+
+        public String toString() {
+            if (sensor != null) {
+                return sensor.toString();
+            }
+            return "Gyro sensor is null";
+        }
+
+        public String getConnectionInfo() {
+            if (sensor != null) {
+                return sensor.getConnectionInfo();
+            }
+            return "Gyro sensor is null";
+        }
+
+        public int getVersion() {
+            if (sensor != null) {
+                return sensor.getVersion();
+            }
+            return 0;
+        }
+
+        public int hashCode() {
+            if (sensor != null) {
+                return sensor.hashCode();
+            }
+            return 0;
+        }
+
+
+        public String getDeviceName() {
+            if (sensor != null) {
+                return sensor.getDeviceName();
+            }
+            return "Gyro sensor is null";
         }
 
         public HardwareDevice.Manufacturer getManufacturer() {
