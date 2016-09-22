@@ -17,6 +17,7 @@ public class Hardware506 extends Hardware {
     DcMotorWrapper rightRearMotor;
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
+    GyroSensorWrapper gyro;
 
     /**
      * Constructor initializes hardware map
@@ -35,6 +36,7 @@ public class Hardware506 extends Hardware {
         rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
         leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
         rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
+        gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
