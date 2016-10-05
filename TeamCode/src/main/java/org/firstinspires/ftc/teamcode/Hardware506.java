@@ -26,6 +26,7 @@ public class Hardware506 extends Hardware {
      */
     public Hardware506(HardwareMap hardwareMap) {
         super(hardwareMap);
+        initializeRobot();
     }
 
     @Override
@@ -34,8 +35,8 @@ public class Hardware506 extends Hardware {
         leftRearMotor = new DcMotorWrapper(getDevice(dcMotor, "lr"));
         rightFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "rf"));
         rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
-        leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
-        rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
+        //leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
+        //rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -71,6 +72,7 @@ public class Hardware506 extends Hardware {
             rightFrontPower /= max;
             rightRearPower /= max;
         }
+
         leftFrontMotor.setPower(leftFrontPower);
         leftRearMotor.setPower(leftRearPower);
         rightFrontMotor.setPower(rightFrontPower);
