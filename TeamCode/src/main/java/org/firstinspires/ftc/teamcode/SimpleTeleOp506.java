@@ -2,9 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.util.Range;
 
 /**
  * Simple teleop for testing Drivetrain with mecanum/tank drive. Toggle with start button on gamepad 1
@@ -16,7 +13,7 @@ import com.qualcomm.robotcore.util.Range;
 public class SimpleTeleOp506 extends OpMode {
 
     Hardware506 robot;
-    boolean startPreviousState;
+    boolean backPreviousState;
 
     enum DriveMode {
         TANK_DRIVE,
@@ -29,7 +26,7 @@ public class SimpleTeleOp506 extends OpMode {
     @Override
     public void init() {
         robot = new Hardware506(hardwareMap);
-        startPreviousState = false;
+        backPreviousState = false;
         currentDriveMode = DriveMode.MECANUM;
         switchDriveMode();
         robot.gyro.calibrate();
@@ -45,13 +42,13 @@ public class SimpleTeleOp506 extends OpMode {
 
     @Override
     public void loop() {
-        boolean startButtonState = gamepad1.start;
-        if (startButtonState != startPreviousState) {
-            if (startButtonState) {
+        boolean backButtonState = gamepad1.back;
+        if (backButtonState != backPreviousState) {
+            if (backButtonState) {
                 switchDriveMode();
             }
         }
-        startPreviousState = startButtonState;
+        backPreviousState = backButtonState;
 
         switch (currentDriveMode) {
             case MECANUM:
@@ -61,16 +58,23 @@ public class SimpleTeleOp506 extends OpMode {
             case MECANUM_RELATIVE_TO_DRIVER:
                 telemetry.addData("Drive Mode", "Mecanum relative to driver");
                 double directionRelativeToRobot;
-                if (gamepad1.left_stick_y == 0){
-                    directionRelativeToRobot = Math.PI / 2;
-                }else
-                directionRelativeToRobot = Math.atan(gamepad1.left_stick_x / gamepad1.left_stick_y);
+                if (gamepad1.left_stick_y == 0) {
+                    if (gamepad1.left_stick_x > 0)
+                        directionRelativeToRobot = Math.PI / 2;
+                    else
+                        directionRelativeToRobot = -Math.PI / 2;
+                } else
+                    directionRelativeToRobot = Math.atan(gamepad1.left_stick_x / -gamepad1.left_stick_y);
                 double velocity = Math.sqrt(Math.pow(gamepad1.left_stick_y, 2) + Math.pow(gamepad1.left_stick_x, 2));
+                if (-gamepad1.left_stick_y < 0) {
+                    directionRelativeToRobot += Math.PI;
+                }
                 double adjustedDirection = directionRelativeToRobot - robot.gyro.getHeading() * Math.PI / 180;
-                robot.drive(velocity * Math.cos(adjustedDirection), velocity * Math.sin(adjustedDirection), gamepad1.right_stick_x);
+                double forwardPower = velocity * Math.cos(adjustedDirection);
+                double sidePower = velocity * Math.sin(adjustedDirection);
+                robot.drive(forwardPower, sidePower, gamepad1.right_stick_x);
                 break;
             case TANK_DRIVE:
-
                 telemetry.addData("Drive Mode", "Tank Drive");
                 double leftPower = gamepad1.left_stick_y;
                 double rightPower = gamepad1.right_stick_y;
@@ -83,6 +87,11 @@ public class SimpleTeleOp506 extends OpMode {
 
         }
         telemetry.addData("State", "Running");
+    }
+
+    @Override
+    public void stop() {
+        telemetry.addData("State", "Stopped");
     }
 
     void switchDriveMode() {
