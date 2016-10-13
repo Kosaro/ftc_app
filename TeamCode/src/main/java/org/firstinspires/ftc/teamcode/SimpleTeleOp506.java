@@ -27,8 +27,7 @@ public class SimpleTeleOp506 extends OpMode {
     public void init() {
         robot = new Hardware506(hardwareMap);
         backPreviousState = false;
-        currentDriveMode = DriveMode.MECANUM;
-        switchDriveMode();
+        currentDriveMode = DriveMode.MECANUM_RELATIVE_TO_DRIVER;
         robot.gyro.calibrate();
         telemetry.addData("State", "Calibrating Gyro");
     }
@@ -53,26 +52,13 @@ public class SimpleTeleOp506 extends OpMode {
         switch (currentDriveMode) {
             case MECANUM:
                 telemetry.addData("Drive Mode", "Mecanum");
+                robot.setDriveMode(Hardware506.DriveMode.MECANUM);
                 robot.drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
                 break;
             case MECANUM_RELATIVE_TO_DRIVER:
                 telemetry.addData("Drive Mode", "Mecanum relative to driver");
-                double directionRelativeToRobot;
-                if (gamepad1.left_stick_y == 0) {
-                    if (gamepad1.left_stick_x > 0)
-                        directionRelativeToRobot = Math.PI / 2;
-                    else
-                        directionRelativeToRobot = -Math.PI / 2;
-                } else
-                    directionRelativeToRobot = Math.atan(gamepad1.left_stick_x / -gamepad1.left_stick_y);
-                double velocity = Math.sqrt(Math.pow(gamepad1.left_stick_y, 2) + Math.pow(gamepad1.left_stick_x, 2));
-                if (-gamepad1.left_stick_y < 0) {
-                    directionRelativeToRobot += Math.PI;
-                }
-                double adjustedDirection = directionRelativeToRobot - robot.gyro.getHeading() * Math.PI / 180;
-                double forwardPower = velocity * Math.cos(adjustedDirection);
-                double sidePower = velocity * Math.sin(adjustedDirection);
-                robot.drive(forwardPower, sidePower, gamepad1.right_stick_x);
+                robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
+                robot.drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
                 break;
             case TANK_DRIVE:
                 telemetry.addData("Drive Mode", "Tank Drive");
@@ -86,6 +72,7 @@ public class SimpleTeleOp506 extends OpMode {
 
 
         }
+        telemetry.addData("Gyro Heading", robot.gyro.getHeading());
         telemetry.addData("State", "Running");
     }
 
@@ -110,4 +97,17 @@ public class SimpleTeleOp506 extends OpMode {
                 break;
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

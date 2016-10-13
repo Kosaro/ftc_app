@@ -282,7 +282,6 @@ public abstract class Hardware {
 
     public class UltrasonicSensorWrapper {
         private UltrasonicSensor sensor;
-        private CalculateUltrasonicMedianValue calcMedianThread;
 
 
         UltrasonicSensorWrapper(HardwareDevice device) {
@@ -293,68 +292,9 @@ public abstract class Hardware {
             }
         }
 
-        private class CalculateUltrasonicMedianValue implements Runnable {
-            int intervalMiliSeconds;
-            ElapsedTime elapsedTime;
-            List<Double> values;
-            boolean isThreadStopped;
-            double value;
-
-            CalculateUltrasonicMedianValue(int intervalMiliSeconds) {
-                this.intervalMiliSeconds = intervalMiliSeconds;
-                elapsedTime = new ElapsedTime();
-                values = new ArrayList<>();
-                isThreadStopped = false;
-                value = getUltrasonicLevel();
-            }
 
 
-            public void run() {
-                elapsedTime.reset();
-                while (!isThreadStopped) {
-                    values.add(getUltrasonicLevel());
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    if (elapsedTime.milliseconds() > intervalMiliSeconds) {
-                        value = findMedianOfDoubleList(values);
-                        elapsedTime.reset();
-                        values.clear();
-                    }
-                }
-            }
 
-            public double getValue() {
-                return value;
-            }
-
-            public void stopThread() {
-                isThreadStopped = true;
-
-            }
-        }
-
-
-        public double getUltrasonicLevelMedian() {
-            if (sensor != null) {
-                if (calcMedianThread == null) {
-                    calcMedianThread = new CalculateUltrasonicMedianValue(200);
-                    calcMedianThread.run();
-                }
-                return calcMedianThread.getValue();
-            }
-            return -1;
-        }
-
-        public void stopMedianCalculatingThread(){
-            if (sensor != null) {
-                if (calcMedianThread != null) {
-                    calcMedianThread.stopThread();
-                }
-            }
-        }
 
         public double getUltrasonicLevel() {
             if (sensor != null) {
@@ -539,6 +479,7 @@ public abstract class Hardware {
 
     public class GyroSensorWrapper{
         GyroSensor sensor;
+        double offset;
 
         GyroSensorWrapper(HardwareDevice device) {
             try {
@@ -546,13 +487,19 @@ public abstract class Hardware {
             } catch (Exception e) {
                 this.sensor = null;
             }
+            offset = 0;
+        }
+
+        public void centerOffset(){
+            offset = 0;
+            offset = getHeading();
         }
 
         public int getHeading(){
             if (sensor != null) {
-                return sensor.getHeading();
+                return (int) (sensor.getHeading() - offset);
             }
-            return -1;
+            return 0;
         }
 
         public int rawX(){
@@ -714,4 +661,5 @@ public abstract class Hardware {
         }
         return -1;
     }
+
 }

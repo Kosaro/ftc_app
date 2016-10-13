@@ -18,6 +18,29 @@ public class Hardware506 extends Hardware {
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
     GyroSensorWrapper gyro;
+    ColorSensorWrapper lineDetector;
+    ColorSensorWrapper beaconColorSensor;
+
+    enum ColorDetected {
+        BLUE("Blue"),
+        RED("Red"),
+        NONE("None");
+
+        String description;
+
+        public String toString(){
+            return description;
+        }
+        ColorDetected(String description){
+            this.description = description;
+        }
+    }
+
+    enum DriveMode{
+        MECANUM,
+        MECANUM_WITH_GYRO
+    }
+    DriveMode currentDriveMode;
 
     /**
      * Constructor initializes hardware map
@@ -29,24 +52,28 @@ public class Hardware506 extends Hardware {
         initializeRobot();
     }
 
+
     @Override
     public void initializeRobot() {
         leftFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "lf"));
         leftRearMotor = new DcMotorWrapper(getDevice(dcMotor, "lr"));
         rightFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "rf"));
         rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
-        //leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
-        //rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
+        leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
+        rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
+        lineDetector = new ColorSensorWrapper(getDevice(colorSensor, "lc"));
+        beaconColorSensor = new ColorSensorWrapper(getDevice(colorSensor, "bc"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
+
     }
 
-    public void drive(double forwardValue, double sideValue, double rotationValue) {
+    private void powerDriveTrain(double forwardValue, double sideValue, double rotationValue) {
         double leftFrontPower;
         double leftRearPower;
         double rightFrontPower;
@@ -79,14 +106,66 @@ public class Hardware506 extends Hardware {
         rightRearMotor.setPower(rightRearPower);
     }
 
-    public void setDriveMotorMode(DcMotor.RunMode runMode){
+    public void drive(double forwardValue, double sideValue, double rotationValue){
+        switch (currentDriveMode) {
+            case MECANUM:
+                powerDriveTrain(forwardValue, sideValue, rotationValue);
+                break;
+            case MECANUM_WITH_GYRO:
+                double directionRelativeToRobot;
+                if (forwardValue == 0) {
+                    if (sideValue > 0)
+                        directionRelativeToRobot = Math.PI / 2;
+                    else
+                        directionRelativeToRobot = -Math.PI / 2;
+                } else
+                    directionRelativeToRobot = Math.atan(sideValue / forwardValue);
+                double velocity = Math.sqrt(Math.pow(forwardValue, 2) + Math.pow(sideValue, 2));
+                if (forwardValue < 0) {
+                    directionRelativeToRobot += Math.PI;
+                }
+                double adjustedDirection = directionRelativeToRobot - gyro.getHeading() * Math.PI / 180;
+                double forwardPower = velocity * Math.cos(adjustedDirection);
+                double sidePower = velocity * Math.sin(adjustedDirection);
+                powerDriveTrain(forwardPower, sidePower, sideValue);
+                break;
+    }}
+
+    public void setDriveMotorMode(DcMotor.RunMode runMode) {
         leftFrontMotor.setMode(runMode);
         leftRearMotor.setMode(runMode);
         rightRearMotor.setMode(runMode);
         rightFrontMotor.setMode(runMode);
     }
 
-    public double getUltrasonicAverageDistance(){
-        return (leftUltrasonic.getUltrasonicLevelMedian() + rightUltrasonic.getUltrasonicLevelMedian()) / 2;
+    public void setDriveMode(DriveMode driveMode){
+        currentDriveMode = driveMode;
+    }
+
+    public double getUltrasonicAverageDistance() {
+        return (leftUltrasonic.getUltrasonicLevel() + rightUltrasonic.getUltrasonicLevel()) / 2.0;
+    }
+
+    public boolean isLineDetected() {
+        double blueColorThreshold = 50;
+        double redColorThreshold = 50;
+        double greenColorThreshold = 50;
+        if (lineDetector.blue() > blueColorThreshold && lineDetector.green() > greenColorThreshold && lineDetector.red() > redColorThreshold) {
+            return true;
+        }
+        return false;
+    }
+
+    public ColorDetected getBeaconColor() {
+        double blueColorThreshold = 50;
+        double redColorThreshold = 50;
+        double blueStrength = beaconColorSensor.blue();
+        double redStrength = beaconColorSensor.red();
+        if (blueStrength > blueColorThreshold && blueStrength > redStrength) {
+            return ColorDetected.BLUE;
+        } else if (redStrength > redColorThreshold && blueStrength < redStrength) {
+            return ColorDetected.RED;
+        } else
+            return ColorDetected.NONE;
     }
 }
