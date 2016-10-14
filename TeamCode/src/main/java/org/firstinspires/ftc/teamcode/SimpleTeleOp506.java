@@ -97,17 +97,4 @@ public class SimpleTeleOp506 extends OpMode {
                 break;
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

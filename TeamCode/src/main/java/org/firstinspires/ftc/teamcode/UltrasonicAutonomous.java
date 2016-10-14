@@ -59,7 +59,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                 case SEARCH_FOR_BEACON:
                     rotationPower = 0;
                     if (distance > 50) {
-                        forwardPower = 1;
+                        forwardPower = .3;
                         if (robot.gyro.getHeading() > 5)
                             rotationPower = .3;
                         else if (robot.gyro.getHeading() < 5)
@@ -80,9 +80,13 @@ public class UltrasonicAutonomous extends LinearOpMode {
                         rotationPower = alignToWall();
                         if (robot.isLineDetected()) {
                             currentState = State.FOLLOW_LINE;
-                        } else sidePower = -.5;
+                        } else sidePower = -.2;
                     } else if (distance < 15) {
                         forwardPower = -.2;
+                        rotationPower = alignToWall();
+                        if (robot.isLineDetected()) {
+                            currentState = State.FOLLOW_LINE;
+                        } else sidePower = -.2;
                     }
                     telemetry.addData("State", "Searching White Line");
                     break;
@@ -90,7 +94,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     rotationPower = alignToWall();
                     if (robot.getUltrasonicAverageDistance() < 5)
                         forwardPower = -.1;
-                    if (robot.getUltrasonicAverageDistance() > 7)
+                    else if (robot.getUltrasonicAverageDistance() > 7)
                         forwardPower = .1;
                     else if (rotationPower == 0) {
                         forwardPower = 0;
@@ -153,7 +157,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     telemetry.addData("State", "Push Button");
                     break;
                 case MOVE_LEFT:
-                    if (getRuntime() < time + 2) {
+                    if (getRuntime() < time + .5) {
                         if (distance > 15) {
                             forwardPower = .3;
                             rotationPower = alignToWall();
@@ -167,6 +171,9 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     break;
                 case STOP:
                     telemetry.addData("State", "Stop");
+                    sidePower = 0;
+                    rotationPower = 0;
+                    forwardPower = 0;
                     break;
             }
 
@@ -196,11 +203,11 @@ public class UltrasonicAutonomous extends LinearOpMode {
         double left = robot.leftUltrasonic.getUltrasonicLevel();
         double right = robot.rightUltrasonic.getUltrasonicLevel();
 
-        if (Math.abs(left - right) > 5) {
-            if (left < right)
-                return .2;
+        if (Math.abs(left - right) > 2) {
+            if (left > right)
+                return .1;
             else
-                return -.2;
+                return -.1;
         }
         return 0;
     }

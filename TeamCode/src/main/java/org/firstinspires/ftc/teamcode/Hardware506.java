@@ -18,7 +18,7 @@ public class Hardware506 extends Hardware {
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
     GyroSensorWrapper gyro;
-    ColorSensorWrapper lineDetector;
+    OpticalDistanceSensorWrapper lineDetector;
     ColorSensorWrapper beaconColorSensor;
 
     enum ColorDetected {
@@ -62,7 +62,7 @@ public class Hardware506 extends Hardware {
         leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
         rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
-        lineDetector = new ColorSensorWrapper(getDevice(colorSensor, "lc"));
+        lineDetector = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ld"));
         beaconColorSensor = new ColorSensorWrapper(getDevice(colorSensor, "bc"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -147,10 +147,8 @@ public class Hardware506 extends Hardware {
     }
 
     public boolean isLineDetected() {
-        double blueColorThreshold = 50;
-        double redColorThreshold = 50;
-        double greenColorThreshold = 50;
-        if (lineDetector.blue() > blueColorThreshold && lineDetector.green() > greenColorThreshold && lineDetector.red() > redColorThreshold) {
+        double lightThreshold = .30;
+        if ( lineDetector.getLightDetected() > lightThreshold) {
             return true;
         }
         return false;
