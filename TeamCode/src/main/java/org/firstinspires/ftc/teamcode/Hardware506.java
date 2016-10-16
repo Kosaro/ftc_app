@@ -143,7 +143,17 @@ public class Hardware506 extends Hardware {
     }
 
     public double getUltrasonicAverageDistance() {
-        return (leftUltrasonic.getUltrasonicLevel() + rightUltrasonic.getUltrasonicLevel()) / 2.0;
+        double left = leftUltrasonic.getUltrasonicLevel();
+        double right = rightUltrasonic.getUltrasonicLevel();
+        if (left == 0){
+            right *= 2;
+        }
+        if (right == 0)
+            left *= 2;
+
+        if (left == 0 && right  == 0)
+            left = 500;
+        return (left + right) / 2.0;
     }
 
     public boolean isLineDetected() {
