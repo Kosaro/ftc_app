@@ -2,9 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 
-import org.firstinspires.ftc.robotcontroller.external.samples.SensorMRRangeSensor;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
@@ -15,9 +13,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
  * @author Oscar Kosar-Kosarewicz
  * @version 9/20/16
  */
-@Autonomous(name = "Beacon Navigator Tester", group = "Tester")
+@Autonomous(name = "Beacon Driving Tester", group = "Tester")
 //@Disabled
-public class BeaconNavigatorTester extends LinearOpMode {
+public class BeaconDrivingTester extends LinearOpMode {
     Hardware506 robot;
     BeaconNavigator beaconNavigator;
 
@@ -58,6 +56,10 @@ public class BeaconNavigatorTester extends LinearOpMode {
             } else {
                 telemetry.addData("Pos", "Unknown");
             }
+            lastLocation.getTranslation();
+
+
+
             telemetry.update();
             idle();
         }

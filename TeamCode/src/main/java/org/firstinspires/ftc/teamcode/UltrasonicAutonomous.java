@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.Range;
 import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.NONE;
 
 /**
- * Autonomous without vuforia, using two ultrasonic sensors and two color sensors(work in progress)
+ * Autonomous without vuforia, using two ultrasonic sensors and two color sensors
  *
  * @author Oscar Kosar-Kosarewicz
  * @version 10/16/16
@@ -50,7 +50,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         robot = new Hardware506(hardwareMap);
-        robot.setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.setDriveMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
         currentState = State.DRIVE_AWAY_FROM_WALL;
         int beaconsPushed = 0;
@@ -71,10 +71,11 @@ public class UltrasonicAutonomous extends LinearOpMode {
             double distance = robot.getUltrasonicAverageDistance();
             switch (currentState) {
                 case DRIVE_AWAY_FROM_WALL:
-                    forwardPower = .5;
+                    forwardPower = .2;
                     sidePower = 0;
                     rotationPower = gyroAngleCorrection();
-                    if (robot.leftFrontMotor.getCurrentPosition() > 1000){
+                    telemetry.addData("Encoder", robot.leftFrontMotor.getCurrentPosition());
+                    if (robot.leftFrontMotor.getCurrentPosition() > 200){
                         currentState = State.TURN_TOWARD_BEACON;
                     }
                     break;
@@ -253,9 +254,9 @@ public class UltrasonicAutonomous extends LinearOpMode {
             heading -= 180;
         }
 
-        if (heading > finalHeading)
+        if (heading + 2 > finalHeading)
             return  .3;
-        else if (heading < finalHeading)
+        else if (heading  - 2 < finalHeading)
              return  -.3;
         else
         return 0;

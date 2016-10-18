@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.util.RobotLog;
+import com.vuforia.HINT;
+import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -50,6 +52,7 @@ public class BeaconNavigator {
         parameters.vuforiaLicenseKey = robot.VUFORIA_LICENSE_KEY;
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
         this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
+        Vuforia.setHint(HINT.HINT_MAX_SIMULTANEOUS_IMAGE_TARGETS, 4);
 
         images = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
         VuforiaTrackable wheelsTarget = images.get(0);
