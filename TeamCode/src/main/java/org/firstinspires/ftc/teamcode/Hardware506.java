@@ -127,7 +127,7 @@ public class Hardware506 extends Hardware {
                 double adjustedDirection = directionRelativeToRobot - gyro.getHeading() * Math.PI / 180;
                 double forwardPower = velocity * Math.cos(adjustedDirection);
                 double sidePower = velocity * Math.sin(adjustedDirection);
-                powerDriveTrain(forwardPower, sidePower, sideValue);
+                powerDriveTrain(forwardPower, sidePower, rotationValue);
                 break;
     }}
 

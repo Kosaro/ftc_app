@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -279,6 +280,99 @@ public abstract class Hardware {
                 motor.resetDeviceConfigurationForOpMode();
             }
         }
+    }
+
+    public class ServoWrapper {
+        Servo servo;
+
+        ServoWrapper(HardwareDevice servo) {
+            try {
+                this.servo = (Servo) servo;
+            } catch (Exception e) {
+                this.servo = null;
+            }
+        }
+
+        public void setPower(double position) {
+            if (servo != null) {
+                position = Range.clip(position, 0, 1);
+                servo.setPosition(position);
+            }
+        }
+
+        public void setDirection(Servo.Direction direction) {
+            if (servo != null) {
+                servo.setDirection(direction);
+            }
+        }
+
+
+
+        public int getPortNumber() {
+            if (servo != null) {
+                return servo.getPortNumber();
+            }
+            return 0;
+        }
+
+       
+
+        public Servo.Direction getDirection() {
+            if (servo != null) {
+                return servo.getDirection();
+            }
+            return null;
+        }
+
+        public String toString() {
+            if (servo != null) {
+                return servo.toString();
+            }
+            return null;
+        }
+
+        public String getConnectionInfo() {
+            if (servo != null) {
+                return servo.getConnectionInfo();
+            }
+            return null;
+        }
+
+
+        public String getDeviceName() {
+            if (servo != null) {
+                return servo.getDeviceName();
+            }
+            return null;
+        }
+
+        public HardwareDevice.Manufacturer getManufacturer() {
+            if (servo != null) {
+                return servo.getManufacturer();
+            }
+            return null;
+        }
+
+        public void resetDeviceConfigurationForOpMode() {
+            if (servo != null) {
+                servo.resetDeviceConfigurationForOpMode();
+            }
+        }
+
+        public double getPosition(){
+            if (servo != null){
+                return servo.getPosition();
+            }
+            return -1;
+        }
+
+        public void scaleRange(double min, double max){
+            if (servo != null){
+                servo.scaleRange(min, max);
+            }
+        }
+
+
     }
 
     public class UltrasonicSensorWrapper {
@@ -583,6 +677,8 @@ public abstract class Hardware {
 
 
     }
+
+
 
     public class GyroSensorWrapper{
         GyroSensor sensor;
