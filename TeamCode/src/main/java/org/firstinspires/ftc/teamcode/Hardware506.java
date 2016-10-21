@@ -15,6 +15,7 @@ public class Hardware506 extends Hardware {
     DcMotorWrapper rightFrontMotor;
     DcMotorWrapper leftRearMotor;
     DcMotorWrapper rightRearMotor;
+    ServoWrapper armServo;
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
     GyroSensorWrapper gyro;
@@ -64,6 +65,7 @@ public class Hardware506 extends Hardware {
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
         lineDetector = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ld"));
         beaconColorSensor = new ColorSensorWrapper(getDevice(colorSensor, "bc"));
+        armServo = new ServoWrapper(getDevice(servo, "as"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);

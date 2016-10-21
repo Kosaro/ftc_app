@@ -293,7 +293,7 @@ public abstract class Hardware {
             }
         }
 
-        public void setPower(double position) {
+        public void setPosition(double position) {
             if (servo != null) {
                 position = Range.clip(position, 0, 1);
                 servo.setPosition(position);
@@ -315,7 +315,7 @@ public abstract class Hardware {
             return 0;
         }
 
-       
+
 
         public Servo.Direction getDirection() {
             if (servo != null) {
