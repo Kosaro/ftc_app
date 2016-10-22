@@ -22,7 +22,7 @@ import java.util.List;
  * Abstract hardware class that defines required/useful universal methods
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 9/21/16
+ * @version 10/21/16
  */
 public abstract class Hardware {
 

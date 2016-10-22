@@ -5,13 +5,15 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
+import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.BLUE;
 import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.NONE;
+import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.RED;
 
 /**
  * Autonomous without vuforia, using two ultrasonic sensors and two color sensors
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 10/16/16
+ * @version 10/22/16
  */
 @Autonomous(name = "Ultrasonic Autonomous", group = "Autonomous")
 //@Disabled
@@ -31,6 +33,8 @@ public class UltrasonicAutonomous extends LinearOpMode {
         DETECT_COLOR("Detect Beacon Color"),
         TURN_BUTTON_ALIGNMENT("Turn to Push Button"),
         PUSH_BUTTON("Push Button"),
+        VERIFY_BEACON_COLOR("Verify Beacon Color"),
+        WAIT_FIVE_SECONDS("Wait Five Seconds"),
         MOVE_LEFT("Move Left"),
         STOP("Stop");
 
@@ -45,10 +49,12 @@ public class UltrasonicAutonomous extends LinearOpMode {
         }
     }
 
+
     State currentState;
 
     @Override
     public void runOpMode() throws InterruptedException {
+
         robot = new Hardware506(hardwareMap);
         robot.setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -75,7 +81,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     forwardPower = .3;
                     sidePower = 0;
                     rotationPower = gyroAngleCorrection();
-                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 500){
+                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 500) {
                         currentState = State.TURN_TOWARD_BEACON;
                     }
                     break;
@@ -83,9 +89,10 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     forwardPower = 0;
                     sidePower = 0;
                     rotationPower = turn(50);
-                    if (rotationPower == 0){
+                    if (rotationPower == 0) {
                         robot.gyro.centerOffset();
                         currentState = State.DRIVE_TO_WALL;
+                        robot.setArmPositionDown(true);
                     }
                     break;
                 case DRIVE_TO_WALL:
@@ -119,8 +126,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     rotationPower = alignToWall();
                     if (distance > 10) {
                         forwardPower = .2;
-                    }
-                    else if (distance < 5)
+                    } else if (distance < 5)
                         forwardPower = -.1;
                     else if (distance > 7)
                         forwardPower = .1;
@@ -134,14 +140,11 @@ public class UltrasonicAutonomous extends LinearOpMode {
 
                     if (rotationPower == 0 && forwardPower == 0) {
                         sidePower = 0;
-                        currentState = State.DETECT_COLOR;
+                        colorDetected = robot.getBeaconColor();
+                        currentState = State.TURN_BUTTON_ALIGNMENT;
+                        robot.gyro.centerOffset();
+                        robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
                     }
-                    break;
-                case DETECT_COLOR:
-                    colorDetected = robot.getBeaconColor();
-                    currentState = State.TURN_BUTTON_ALIGNMENT;
-                    robot.gyro.centerOffset();
-                    robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
                     break;
                 case TURN_BUTTON_ALIGNMENT:
                     forwardPower = 0;
@@ -161,17 +164,31 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     }
                     break;
                 case PUSH_BUTTON:
-                    if (getRuntime() > time + 1) {
+                    if (getRuntime() > time + 1 || distance < 4) {
                         forwardPower = 0;
                         robot.setDriveMode(Hardware506.DriveMode.MECANUM);
                         time = getRuntime();
                         beaconsPushed++;
                         if (beaconsPushed < 2)
-                            currentState = State.MOVE_LEFT;
+                            currentState = State.VERIFY_BEACON_COLOR;
                         else
                             currentState = State.STOP;
-                    } else {
-                        forwardPower = .2;
+                    } else if (getRuntime() < time + .2){
+                        forwardPower = -.2;
+                    }
+                    else forwardPower = .2;
+                    break;
+                case VERIFY_BEACON_COLOR:
+                    colorDetected = robot.getBeaconColor();
+                    if (colorDetected != RED)
+                        currentState = State.MOVE_LEFT;
+                    else
+                    currentState = State.WAIT_FIVE_SECONDS;
+                    time = getRuntime();
+                        break;
+                case WAIT_FIVE_SECONDS:
+                    if (getRuntime() > time + 5){
+                        currentState = State.PUSH_BUTTON;
                     }
                     break;
                 case MOVE_LEFT:
@@ -194,6 +211,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     sidePower = 0;
                     rotationPower = 0;
                     forwardPower = 0;
+                    robot.setArmPositionDown(false);
                     break;
             }
 
@@ -207,7 +225,6 @@ public class UltrasonicAutonomous extends LinearOpMode {
             telemetry.addData("Gyro Heading", robot.gyro.getHeading());
             telemetry.addData("Line Detected", robot.isLineDetected());
             telemetry.addData("Beacon Color Detected", robot.getBeaconColor());
-            telemetry.addData("rotation Power", rotationPower);
 
             telemetry.update();
             idle();
@@ -242,10 +259,10 @@ public class UltrasonicAutonomous extends LinearOpMode {
             heading -= 180;
         }
         heading = Range.clip(heading, -90, 90);
-         return Range.scale(heading, -90, 90, -1, 1);
+        return Range.scale(heading, -90, 90, -1, 1);
     }
 
-    public double turn(double finalHeading){
+    public double turn(double finalHeading) {
         int heading = robot.gyro.getHeading();
         if (heading > 180) { // convert 0 - 360 range of heading to -180 - 180
             heading += 180;
@@ -253,14 +270,14 @@ public class UltrasonicAutonomous extends LinearOpMode {
             heading -= 180;
         }
 
-        if (Math.abs(heading - finalHeading) < 3){
+        if (Math.abs(heading - finalHeading) < 3) {
             return 0;
         }
         if (heading < finalHeading)
-            return  .1;
-        else if (heading  > finalHeading)
-             return  -.1;
+            return .1;
+        else if (heading > finalHeading)
+            return -.1;
         else
-        return 0;
+            return 0;
     }
 }

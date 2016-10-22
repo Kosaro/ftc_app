@@ -7,13 +7,15 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Simple teleop for testing Drivetrain with mecanum/tank drive. Toggle with start button on gamepad 1
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 9/21/16
+ * @version 10/22/16
  */
 @TeleOp(name = "Simple TeleOp", group = "Iterative Opmode")
 public class SimpleTeleOp506 extends OpMode {
 
     Hardware506 robot;
     boolean backPreviousState;
+    boolean aPreviousState;
+    boolean servoIsDown;
 
     enum DriveMode {
         TANK_DRIVE,
@@ -27,6 +29,8 @@ public class SimpleTeleOp506 extends OpMode {
     public void init() {
         robot = new Hardware506(hardwareMap);
         backPreviousState = false;
+        aPreviousState = false;
+        servoIsDown = false;
         currentDriveMode = DriveMode.MECANUM_RELATIVE_TO_DRIVER;
         robot.gyro.calibrate();
         telemetry.addData("State", "Calibrating Gyro");
@@ -69,10 +73,22 @@ public class SimpleTeleOp506 extends OpMode {
                 robot.rightFrontMotor.setPower(rightPower);
                 robot.rightRearMotor.setPower(rightPower);
                 break;
-
-
         }
+
+        boolean aButtonState = gamepad1.a;
+        if (aButtonState != backPreviousState) {
+            if (aButtonState) {
+                servoIsDown = !servoIsDown;
+            }
+        }
+        robot.setArmPositionDown(servoIsDown);
+        aPreviousState = aButtonState;
+
         telemetry.addData("Gyro Heading", robot.gyro.getHeading());
+        telemetry.addData("Color Detected", robot.getBeaconColor());
+        telemetry.addData("Color Detected RGB", String.format("%4.2, %4.2, %, 4.2", robot.beaconColorSensor.red(), robot.beaconColorSensor.green(), robot.beaconColorSensor.blue()));
+        telemetry.addData("Line Detected", robot.isLineDetected());
+        telemetry.addData("Ultrasonic left, right", String.format("%4.2, %4.2", robot.leftUltrasonic.getUltrasonicLevel(), robot.rightUltrasonic.getUltrasonicLevel()));
         telemetry.addData("State", "Running");
     }
 

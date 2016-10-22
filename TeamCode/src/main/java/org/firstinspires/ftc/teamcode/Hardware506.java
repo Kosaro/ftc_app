@@ -8,9 +8,14 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  * Hardware506 class for the robot. Initializes hardware and contains basic methods
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 9/10/16
+ * @version 10/22/16
  */
 public class Hardware506 extends Hardware {
+
+    final static double ARM_SERVO_POSITION_UP = 0;
+    final static double ARM_SERVO_POSITION_DOWN = .79;
+
+
     DcMotorWrapper leftFrontMotor;
     DcMotorWrapper rightFrontMotor;
     DcMotorWrapper leftRearMotor;
@@ -29,18 +34,20 @@ public class Hardware506 extends Hardware {
 
         String description;
 
-        public String toString(){
+        public String toString() {
             return description;
         }
-        ColorDetected(String description){
+
+        ColorDetected(String description) {
             this.description = description;
         }
     }
 
-    enum DriveMode{
+    enum DriveMode {
         MECANUM,
         MECANUM_WITH_GYRO
     }
+
     DriveMode currentDriveMode;
 
     /**
@@ -72,7 +79,7 @@ public class Hardware506 extends Hardware {
         rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
-
+        setArmPositionDown(false);
     }
 
     private void powerDriveTrain(double forwardValue, double sideValue, double rotationValue) {
@@ -108,7 +115,7 @@ public class Hardware506 extends Hardware {
         rightRearMotor.setPower(rightRearPower);
     }
 
-    public void drive(double forwardValue, double sideValue, double rotationValue){
+    public void drive(double forwardValue, double sideValue, double rotationValue) {
         switch (currentDriveMode) {
             case MECANUM:
                 powerDriveTrain(forwardValue, sideValue, rotationValue);
@@ -131,7 +138,8 @@ public class Hardware506 extends Hardware {
                 double sidePower = velocity * Math.sin(adjustedDirection);
                 powerDriveTrain(forwardPower, sidePower, rotationValue);
                 break;
-    }}
+        }
+    }
 
     public void setDriveMotorMode(DcMotor.RunMode runMode) {
         leftFrontMotor.setMode(runMode);
@@ -140,27 +148,27 @@ public class Hardware506 extends Hardware {
         rightFrontMotor.setMode(runMode);
     }
 
-    public void setDriveMode(DriveMode driveMode){
+    public void setDriveMode(DriveMode driveMode) {
         currentDriveMode = driveMode;
     }
 
     public double getUltrasonicAverageDistance() {
         double left = leftUltrasonic.getUltrasonicLevel();
         double right = rightUltrasonic.getUltrasonicLevel();
-        if (left == 0){
+        if (left == 0) {
             right *= 2;
         }
         if (right == 0)
             left *= 2;
 
-        if (left == 0 && right  == 0)
+        if (left == 0 && right == 0)
             left = 500;
         return (left + right) / 2.0;
     }
 
     public boolean isLineDetected() {
         double lightThreshold = .30;
-        if ( lineDetector.getLightDetected() > lightThreshold) {
+        if (lineDetector.getLightDetected() > lightThreshold) {
             return true;
         }
         return false;
@@ -177,5 +185,12 @@ public class Hardware506 extends Hardware {
             return ColorDetected.RED;
         } else
             return ColorDetected.NONE;
+    }
+
+    public void setArmPositionDown(boolean b) {
+        if (b) {
+            armServo.setPosition(ARM_SERVO_POSITION_DOWN);
+        } else
+            armServo.setPosition(ARM_SERVO_POSITION_UP);
     }
 }
