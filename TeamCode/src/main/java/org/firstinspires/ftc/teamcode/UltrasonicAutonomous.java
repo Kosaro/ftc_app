@@ -18,6 +18,7 @@ import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.RED;
 @Autonomous(name = "Ultrasonic Autonomous", group = "Autonomous")
 //@Disabled
 public class UltrasonicAutonomous extends LinearOpMode {
+    final static int DISTANCE_FROM_WALL = 20;
     Hardware506 robot;
     double sidePower;
     double forwardPower;
@@ -110,9 +111,9 @@ public class UltrasonicAutonomous extends LinearOpMode {
                 case SEARCH_FOR_WHITE_LINE:
                     if (distance > 25) {
                         forwardPower = .3;
-                    } else if (distance > 20) {
+                    } else if (distance > DISTANCE_FROM_WALL + 10) {
                         forwardPower = .2;
-                    } else if (distance < 15) {
+                    } else if (distance < DISTANCE_FROM_WALL) {
                         forwardPower = -.2;
                     } else
                         forwardPower = 0;
@@ -124,7 +125,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     break;
                 case FOLLOW_LINE:
                     rotationPower = alignToWall();
-                    if (distance > 10) {
+                    if (distance > DISTANCE_FROM_WALL) {
                         forwardPower = .2;
                     } else if (distance < 5)
                         forwardPower = -.1;
@@ -195,9 +196,9 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     if (getRuntime() < time + .5) {
                         if (distance > 25) {
                             forwardPower = .3;
-                        } else if (distance > 20) {
+                        } else if (distance > DISTANCE_FROM_WALL + 5) {
                             forwardPower = .1;
-                        } else if (distance < 15) {
+                        } else if (distance < DISTANCE_FROM_WALL) {
                             forwardPower = -.1;
                         } else
                             forwardPower = 0;

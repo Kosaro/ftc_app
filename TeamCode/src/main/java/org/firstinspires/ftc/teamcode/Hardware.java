@@ -40,6 +40,7 @@ public abstract class Hardware {
         this.hardwareMap = hardwareMap;
         telemetry = new TelemetryArrayList();
         initializeHardwareMap();
+        initializeRobot();
     }
 
     /**
@@ -97,7 +98,6 @@ public abstract class Hardware {
         ultrasonicSensor = hardwareMap.ultrasonicSensor;
         voltageSensor = hardwareMap.voltageSensor;
         touchSensorMultiplexer = hardwareMap.touchSensorMultiplexer;
-
     }
 
     protected HardwareMap.DeviceMapping dcMotor;

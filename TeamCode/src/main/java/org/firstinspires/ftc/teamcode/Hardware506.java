@@ -57,7 +57,6 @@ public class Hardware506 extends Hardware {
      */
     public Hardware506(HardwareMap hardwareMap) {
         super(hardwareMap);
-        initializeRobot();
     }
 
 
