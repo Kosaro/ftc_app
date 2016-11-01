@@ -76,19 +76,19 @@ public class SimpleTeleOp506 extends OpMode {
         }
 
         boolean aButtonState = gamepad1.a;
-        if (aButtonState != backPreviousState) {
+        if (aButtonState != aPreviousState) {
             if (aButtonState) {
                 servoIsDown = !servoIsDown;
             }
         }
-        robot.setArmPositionDown(servoIsDown);
         aPreviousState = aButtonState;
+        robot.setArmPositionDown(servoIsDown);
 
         telemetry.addData("Gyro Heading", robot.gyro.getHeading());
         telemetry.addData("Color Detected", robot.getBeaconColor());
-        telemetry.addData("Color Detected RGB", String.format("%4.2, %4.2, %, 4.2", robot.beaconColorSensor.red(), robot.beaconColorSensor.green(), robot.beaconColorSensor.blue()));
+        telemetry.addData("Color Detected RGB", String.format("%4d, %4d, %4d", robot.beaconColorSensor.red(), robot.beaconColorSensor.green(), robot.beaconColorSensor.blue()));
         telemetry.addData("Line Detected", robot.isLineDetected());
-        telemetry.addData("Ultrasonic left, right", String.format("%4.2, %4.2", robot.leftUltrasonic.getUltrasonicLevel(), robot.rightUltrasonic.getUltrasonicLevel()));
+        telemetry.addData("Ultrasonic left, right", String.format("%4.2f, %4.2f", robot.leftUltrasonic.getUltrasonicLevel(), robot.rightUltrasonic.getUltrasonicLevel()));
         telemetry.addData("State", "Running");
     }
 

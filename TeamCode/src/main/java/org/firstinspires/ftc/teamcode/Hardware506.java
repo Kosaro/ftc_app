@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Hardware506 extends Hardware {
 
     final static double ARM_SERVO_POSITION_UP = 0;
-    final static double ARM_SERVO_POSITION_DOWN = .79;
+    final static double ARM_SERVO_POSITION_DOWN = .43;
 
 
     DcMotorWrapper leftFrontMotor;
@@ -78,6 +78,7 @@ public class Hardware506 extends Hardware {
         rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        beaconColorSensor.enableLed(false);
         setArmPositionDown(false);
     }
 
@@ -174,8 +175,8 @@ public class Hardware506 extends Hardware {
     }
 
     public ColorDetected getBeaconColor() {
-        double blueColorThreshold = 50;
-        double redColorThreshold = 50;
+        double blueColorThreshold = 5;
+        double redColorThreshold = 5;
         double blueStrength = beaconColorSensor.blue();
         double redStrength = beaconColorSensor.red();
         if (blueStrength > blueColorThreshold && blueStrength > redStrength) {

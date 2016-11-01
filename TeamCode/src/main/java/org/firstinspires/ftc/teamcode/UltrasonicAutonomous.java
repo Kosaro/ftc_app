@@ -32,6 +32,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
         SEARCH_FOR_WHITE_LINE("Search for White Line"),
         FOLLOW_LINE("Follow Line"),
         DETECT_COLOR("Detect Beacon Color"),
+        RETURN_TO_CENTER("Return to Center"),
         TURN_BUTTON_ALIGNMENT("Turn to Push Button"),
         PUSH_BUTTON("Push Button"),
         VERIFY_BEACON_COLOR("Verify Beacon Color"),
@@ -52,6 +53,7 @@ public class UltrasonicAutonomous extends LinearOpMode {
 
 
     State currentState;
+    State nextState;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -82,14 +84,14 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     forwardPower = .3;
                     sidePower = 0;
                     rotationPower = gyroAngleCorrection();
-                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 500) {
+                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 800) {
                         currentState = State.TURN_TOWARD_BEACON;
                     }
                     break;
                 case TURN_TOWARD_BEACON:
                     forwardPower = 0;
                     sidePower = 0;
-                    rotationPower = turn(50);
+                    rotationPower = turn(47);
                     if (rotationPower == 0) {
                         robot.gyro.centerOffset();
                         currentState = State.DRIVE_TO_WALL;
@@ -127,9 +129,9 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     rotationPower = alignToWall();
                     if (distance > DISTANCE_FROM_WALL) {
                         forwardPower = .2;
-                    } else if (distance < 5)
+                    } else if (distance < 10)
                         forwardPower = -.1;
-                    else if (distance > 7)
+                    else if (distance > 11)
                         forwardPower = .1;
                     else
                         forwardPower = 0;
@@ -141,10 +143,43 @@ public class UltrasonicAutonomous extends LinearOpMode {
 
                     if (rotationPower == 0 && forwardPower == 0) {
                         sidePower = 0;
-                        colorDetected = robot.getBeaconColor();
-                        currentState = State.TURN_BUTTON_ALIGNMENT;
-                        robot.gyro.centerOffset();
-                        robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
+                        currentState = State.DETECT_COLOR;
+                        nextState = State.TURN_BUTTON_ALIGNMENT;
+                    }
+                    break;
+                case DETECT_COLOR:
+                    colorDetected = robot.getBeaconColor();
+                    robot.setDriveMode(Hardware506.DriveMode.MECANUM);
+                    if (getRuntime() < time + 3 && colorDetected == NONE) {
+                        if (distance > 10) {
+                            forwardPower = .05;
+                        } else if (distance < 9) {
+                            forwardPower = -.05;
+                        } else
+                            forwardPower = 0;
+                        sidePower = .1;
+                        rotationPower = alignToWall();
+                    } else {
+
+                        currentState = State.RETURN_TO_CENTER;
+                    }
+                    break;
+                case RETURN_TO_CENTER:
+                    if (!robot.isLineDetected()) {
+                        if (distance > 10) {
+                            forwardPower = .05;
+                        } else if (distance < 9) {
+                            forwardPower = -.05;
+                        } else
+                            forwardPower = 0;
+                        sidePower = -.2;
+                        rotationPower = alignToWall();
+                    } else {
+                        currentState = nextState;
+                        if (currentState == State.TURN_BUTTON_ALIGNMENT) {
+                            robot.gyro.centerOffset();
+                            robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
+                        }
                     }
                     break;
                 case TURN_BUTTON_ALIGNMENT:
@@ -165,22 +200,22 @@ public class UltrasonicAutonomous extends LinearOpMode {
                     }
                     break;
                 case PUSH_BUTTON:
-                    if (getRuntime() > time + 1 || distance < 4) {
+                    if (getRuntime() > time + 1 || distance < 6) {
                         forwardPower = 0;
                         robot.setDriveMode(Hardware506.DriveMode.MECANUM);
                         time = getRuntime();
                         beaconsPushed++;
-                        if (beaconsPushed < 2)
-                            currentState = State.VERIFY_BEACON_COLOR;
-                        else
+                        if (beaconsPushed < 2) {
+                            currentState = State.DETECT_COLOR;
+                            nextState = State.VERIFY_BEACON_COLOR;
+                        }else
                             currentState = State.STOP;
                     } else if (getRuntime() < time + .2){
                         forwardPower = -.2;
                     }
-                    else forwardPower = .2;
+                    else forwardPower = .5;
                     break;
                 case VERIFY_BEACON_COLOR:
-                    colorDetected = robot.getBeaconColor();
                     if (colorDetected != RED)
                         currentState = State.MOVE_LEFT;
                     else
@@ -242,12 +277,13 @@ public class UltrasonicAutonomous extends LinearOpMode {
     public double alignToWall() {
         double left = robot.leftUltrasonic.getUltrasonicLevel();
         double right = robot.rightUltrasonic.getUltrasonicLevel();
-
-        if (Math.abs(left - right) > 2) {
-            if (left > right)
-                return .2;
-            else
-                return -.2;
+        if(left + right / 2.0 < 40) {
+            if (Math.abs(left - right) > 2) {
+                if (left > right)
+                    return .2;
+                else
+                    return -.2;
+            }
         }
         return 0;
     }
