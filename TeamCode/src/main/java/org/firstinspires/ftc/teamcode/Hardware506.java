@@ -8,18 +8,21 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  * Hardware506 class for the robot. Initializes hardware and contains basic methods
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 10/22/16
+ * @version 11/7/16
  */
 public class Hardware506 extends Hardware {
 
-    final static double ARM_SERVO_POSITION_UP = 0;
-    final static double ARM_SERVO_POSITION_DOWN = .43;
+    final static double ARM_SERVO_POSITION_UP = .8;
+    final static double ARM_SERVO_POSITION_DOWN = .26;
+    final static double GEAR_RATIO = 2;
 
 
     DcMotorWrapper leftFrontMotor;
     DcMotorWrapper rightFrontMotor;
     DcMotorWrapper leftRearMotor;
     DcMotorWrapper rightRearMotor;
+    DcMotorWrapper sweeperMotor;
+    DcMotorWrapper launcherMotor;
     ServoWrapper armServo;
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
@@ -49,6 +52,7 @@ public class Hardware506 extends Hardware {
     }
 
     DriveMode currentDriveMode;
+    boolean reverseDriveTrain;
 
     /**
      * Constructor initializes hardware map
@@ -66,6 +70,8 @@ public class Hardware506 extends Hardware {
         leftRearMotor = new DcMotorWrapper(getDevice(dcMotor, "lr"));
         rightFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "rf"));
         rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
+        sweeperMotor = new DcMotorWrapper(getDevice(dcMotor, "sm")) ;
+        launcherMotor = new DcMotorWrapper(getDevice(dcMotor, "lm"));
         leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
         rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
@@ -74,12 +80,15 @@ public class Hardware506 extends Hardware {
         armServo = new ServoWrapper(getDevice(servo, "as"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        sweeperMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        launcherMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         beaconColorSensor.enableLed(false);
         setArmPositionDown(false);
+        reverseDriveTrain = false;
     }
 
     private void powerDriveTrain(double forwardValue, double sideValue, double rotationValue) {
@@ -88,10 +97,10 @@ public class Hardware506 extends Hardware {
         double rightFrontPower;
         double rightRearPower;
 
-        leftFrontPower = forwardValue + sideValue + rotationValue;
-        leftRearPower = forwardValue - sideValue + rotationValue;
-        rightFrontPower = forwardValue - sideValue - rotationValue;
-        rightRearPower = forwardValue + sideValue - rotationValue;
+        leftFrontPower = forwardValue + sideValue - rotationValue;
+        leftRearPower = forwardValue - sideValue - rotationValue;
+        rightFrontPower = forwardValue - sideValue + rotationValue;
+        rightRearPower = forwardValue + sideValue + rotationValue;
 
         double max = Double.MIN_VALUE;
         if (Math.abs(leftFrontPower) > max)
@@ -118,6 +127,10 @@ public class Hardware506 extends Hardware {
     public void drive(double forwardValue, double sideValue, double rotationValue) {
         switch (currentDriveMode) {
             case MECANUM:
+                if (reverseDriveTrain){
+                    forwardValue = -forwardValue;
+                    sideValue = -sideValue;
+                }
                 powerDriveTrain(forwardValue, sideValue, rotationValue);
                 break;
             case MECANUM_WITH_GYRO:
@@ -167,11 +180,15 @@ public class Hardware506 extends Hardware {
     }
 
     public boolean isLineDetected() {
-        double lightThreshold = .30;
+        double lightThreshold = .20;
         if (lineDetector.getLightDetected() > lightThreshold) {
             return true;
         }
         return false;
+    }
+
+    public void setReverseDriveTrain(boolean reverseDriveTrain) {
+        this.reverseDriveTrain = reverseDriveTrain;
     }
 
     public ColorDetected getBeaconColor() {

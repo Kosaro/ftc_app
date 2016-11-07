@@ -682,7 +682,7 @@ public abstract class Hardware {
 
     public class GyroSensorWrapper{
         GyroSensor sensor;
-        double offset;
+        int offset;
 
         GyroSensorWrapper(HardwareDevice device) {
             try {
@@ -700,7 +700,12 @@ public abstract class Hardware {
 
         public int getHeading(){
             if (sensor != null) {
-                return (int) (sensor.getHeading() - offset);
+                int heading = sensor.getHeading() - offset;
+                while (heading < 0){
+                    heading += 360;
+                }
+                heading %= 360;
+                return heading;
             }
             return 0;
         }
