@@ -80,8 +80,8 @@ public class Hardware506 extends Hardware {
         armServo = new ServoWrapper(getDevice(servo, "as"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         sweeperMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         launcherMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -97,10 +97,10 @@ public class Hardware506 extends Hardware {
         double rightFrontPower;
         double rightRearPower;
 
-        leftFrontPower = forwardValue + sideValue - rotationValue;
-        leftRearPower = forwardValue - sideValue - rotationValue;
-        rightFrontPower = forwardValue - sideValue + rotationValue;
-        rightRearPower = forwardValue + sideValue + rotationValue;
+        leftFrontPower = forwardValue + sideValue + rotationValue;
+        leftRearPower = forwardValue - sideValue + rotationValue;
+        rightFrontPower = forwardValue - sideValue - rotationValue;
+        rightRearPower = forwardValue + sideValue - rotationValue;
 
         double max = Double.MIN_VALUE;
         if (Math.abs(leftFrontPower) > max)

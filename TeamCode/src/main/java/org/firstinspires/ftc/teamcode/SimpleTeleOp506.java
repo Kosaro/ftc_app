@@ -66,8 +66,8 @@ public class SimpleTeleOp506 extends OpMode {
                 break;
             case TANK_DRIVE:
                 telemetry.addData("Drive Mode", "Tank Drive");
-                double leftPower = gamepad1.left_stick_y;
-                double rightPower = gamepad1.right_stick_y;
+                double leftPower = -gamepad1.left_stick_y;
+                double rightPower = -gamepad1.right_stick_y;
                 robot.leftFrontMotor.setPower(leftPower);
                 robot.leftRearMotor.setPower(leftPower);
                 robot.rightFrontMotor.setPower(rightPower);

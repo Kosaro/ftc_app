@@ -870,4 +870,14 @@ public abstract class Hardware {
         return -1;
     }
 
+    public static double power(double value, double exponent){
+        boolean isNegative = value < 0;
+        value = Math.abs(value);
+        double result = Math.pow(value, exponent);
+        if (isNegative){
+            result *= -1;
+        }
+        return result;
+    }
+
 }
