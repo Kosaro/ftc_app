@@ -82,7 +82,7 @@ public class SimpleTeleOp506 extends OpMode {
             }
         }
         aPreviousState = aButtonState;
-        robot.setArmPositionDown(servoIsDown);
+        //robot.setArmPositionDown(servoIsDown);
 
         telemetry.addData("Gyro Heading", robot.gyro.getHeading());
         telemetry.addData("Color Detected", robot.getBeaconColor());

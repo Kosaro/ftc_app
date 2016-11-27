@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  * Hardware506 class for the robot. Initializes hardware and contains basic methods
@@ -12,9 +13,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  */
 public class Hardware506 extends Hardware {
 
-    final static double ARM_SERVO_POSITION_UP = .8;
-    final static double ARM_SERVO_POSITION_DOWN = .26;
-    final static double GEAR_RATIO = 2;
+    public final static double SLIDE_SERVO_POSITION_LEFT = .35;
+    public final static double SLIDE_SERVO_POSITION_RIGHT = .5;
+    public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .35;
+    public final static double SLiDE_SERVO_POSITION_RIGHT_LIMIT = .5;
+    final static double GEAR_RATIO = 3.0 / 2;
 
 
     DcMotorWrapper leftFrontMotor;
@@ -23,7 +26,7 @@ public class Hardware506 extends Hardware {
     DcMotorWrapper rightRearMotor;
     DcMotorWrapper sweeperMotor;
     DcMotorWrapper launcherMotor;
-    ServoWrapper armServo;
+    ServoWrapper slideServo;
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
     GyroSensorWrapper gyro;
@@ -51,8 +54,10 @@ public class Hardware506 extends Hardware {
         MECANUM_WITH_GYRO
     }
 
+
     DriveMode currentDriveMode;
     boolean reverseDriveTrain;
+    double slideServoPosition;
 
     /**
      * Constructor initializes hardware map
@@ -70,24 +75,24 @@ public class Hardware506 extends Hardware {
         leftRearMotor = new DcMotorWrapper(getDevice(dcMotor, "lr"));
         rightFrontMotor = new DcMotorWrapper(getDevice(dcMotor, "rf"));
         rightRearMotor = new DcMotorWrapper(getDevice(dcMotor, "rr"));
-        sweeperMotor = new DcMotorWrapper(getDevice(dcMotor, "sm")) ;
+        sweeperMotor = new DcMotorWrapper(getDevice(dcMotor, "sm"));
         launcherMotor = new DcMotorWrapper(getDevice(dcMotor, "lm"));
         leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
         rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
         lineDetector = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ld"));
         beaconColorSensor = new ColorSensorWrapper(getDevice(colorSensor, "bc"));
-        armServo = new ServoWrapper(getDevice(servo, "as"));
+        slideServo = new ServoWrapper(getDevice(servo, "as"));
 
-        leftFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        sweeperMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        launcherMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        sweeperMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        launcherMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         beaconColorSensor.enableLed(false);
-        setArmPositionDown(false);
+        setSlidePosition(SLIDE_SERVO_POSITION_LEFT);
         reverseDriveTrain = false;
     }
 
@@ -127,7 +132,7 @@ public class Hardware506 extends Hardware {
     public void drive(double forwardValue, double sideValue, double rotationValue) {
         switch (currentDriveMode) {
             case MECANUM:
-                if (reverseDriveTrain){
+                if (reverseDriveTrain) {
                     forwardValue = -forwardValue;
                     sideValue = -sideValue;
                 }
@@ -192,8 +197,8 @@ public class Hardware506 extends Hardware {
     }
 
     public ColorDetected getBeaconColor() {
-        double blueColorThreshold = 5;
-        double redColorThreshold = 5;
+        double blueColorThreshold = 3;
+        double redColorThreshold = 3;
         double blueStrength = beaconColorSensor.blue();
         double redStrength = beaconColorSensor.red();
         if (blueStrength > blueColorThreshold && blueStrength > redStrength) {
@@ -204,10 +209,13 @@ public class Hardware506 extends Hardware {
             return ColorDetected.NONE;
     }
 
-    public void setArmPositionDown(boolean b) {
-        if (b) {
-            armServo.setPosition(ARM_SERVO_POSITION_DOWN);
-        } else
-            armServo.setPosition(ARM_SERVO_POSITION_UP);
+    public void setSlidePosition(double position) {
+        position = Range.clip(position, SLIDE_SERVO_POSITION_LEFT_LIMIT, SLiDE_SERVO_POSITION_RIGHT_LIMIT);
+        slideServo.setPosition(position);
+        slideServoPosition = position;
+    }
+
+    public double getSlideServoPosition() {
+        return slideServoPosition;
     }
 }

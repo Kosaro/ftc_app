@@ -11,10 +11,10 @@ import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.NONE;
 import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.RED;
 
 /**
- * Autonomous without vuforia, using two ultrasonic sensors and two color sensors
+ * Autonomous without vuforia
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 11/2/16
+ * @version 11/27/16
  */
 @Autonomous(name = "Ultrasonic Autonomous", group = "Autonomous")
 @Disabled
@@ -25,21 +25,25 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
     double sidePower;
     double forwardPower;
     double rotationPower;
+    double sweeperPower;
+    double launcherPower;
     int directionMultiplier;
 
 
     enum State {
         DRIVE_AWAY_FROM_WALL("Drive Away from Wall"),
+        TURN_TOWARD_VORTEX("Turn Toward Center Vortex"),
+        SHOOT_PARTICLE("Shoot Particle"),
         TURN_TOWARD_BEACON("Turn Toward Beacon"),
         DRIVE_TO_WALL("Drive to Wall"),
         SEARCH_FOR_WHITE_LINE("Search for White Line"),
         FOLLOW_LINE("Follow Line"),
         DETECT_COLOR("Detect Beacon Color"),
-        RETURN_TO_CENTER("Return to Center"),
-        TURN_BUTTON_ALIGNMENT("Turn to Push Button"),
         PUSH_BUTTON("Push Button"),
-        VERIFY_BEACON_COLOR("Verify Beacon Color"),
-        WAIT_FIVE_SECONDS("Wait Five Seconds"),
+        BACK_UP("Back Up"),
+        VERIFY_WRONG_COLOR_WAS_NOT_PRESSED("Verify Wrong Color Was Not Pressed"),
+        VERIFY_BEACON_WAS_PRESSED("Verify Beacon Was Pressed"),
+        WAIT("Wait"),
         MOVE_LEFT("Move Left"),
         STOP("Stop");
 
@@ -74,6 +78,8 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
         int movedLeft = 0;
         Hardware506.ColorDetected colorDetected = NONE;
         double time = getRuntime();
+        double fiveSecondDelayTime = 0;
+        double waitTime = 0;
         robot.gyro.calibrate();
         telemetry.addData("State", "Calibrating Gyro");
         telemetry.update();
@@ -90,181 +96,195 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
             sidePower = 0;
             rotationPower = 0;
             forwardPower = 0;
+            sweeperPower = 0;
+            launcherPower = 0;
             switch (currentState) {
                 case DRIVE_AWAY_FROM_WALL:
-                    sidePower = -.3 * directionMultiplier;
-                    forwardPower = 0;
+                    sidePower = -.5;
                     rotationPower = gyroAngleCorrection();
-                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 750 / Hardware506.GEAR_RATIO) {
-                        //currentState = State.TURN_TOWARD_BEACON;
+                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 1400 / Hardware506.GEAR_RATIO) {
+                        currentState = State.TURN_TOWARD_VORTEX;
+                    }
+                    break;
+                case TURN_TOWARD_VORTEX:
+                    rotationPower = turn(-20 * directionMultiplier);
+                    if (rotationPower == 0) {
                         robot.gyro.centerOffset();
-                        currentState = State.DRIVE_TO_WALL;
-                        robot.setArmPositionDown(true);
+                        currentState = State.SHOOT_PARTICLE;
+                        time = getRuntime();
+                    }
+                    break;
+                case SHOOT_PARTICLE:
+                    if (getRuntime() < time + 5) {
+                        if (getRuntime() > time + 1.5 && getRuntime() < time + 3.5) {
+                            sweeperPower = 1;
+                        }
+                        launcherPower = 1;
+                    } else {
+                        currentState = State.TURN_TOWARD_BEACON;
                     }
                     break;
                 case TURN_TOWARD_BEACON:
-                    forwardPower = 0;
-                    sidePower = 0;
-                    rotationPower = turn(-41 * directionMultiplier);
+                    int turnAngle = 10 * directionMultiplier;
+                    if (getDesiredColor() == RED) {
+                        turnAngle += 180;
+                    }
+                    rotationPower = turn(turnAngle);
+
                     if (rotationPower == 0) {
                         robot.gyro.centerOffset();
                         currentState = State.DRIVE_TO_WALL;
-                        robot.setArmPositionDown(true);
+                        robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
                     }
                     break;
                 case DRIVE_TO_WALL:
                     if (distance > 70) {
-                        forwardPower = .25;
+                        forwardPower = .5;
                     } else if (distance > 50) {
-                        forwardPower = .15;
+                        forwardPower = .3;
                     } else if (distance < 40) {
                         currentState = State.SEARCH_FOR_WHITE_LINE;
                         robot.setDriveMode(Hardware506.DriveMode.MECANUM);
+                        time = getRuntime();
                     }
-                    sidePower = 0;
                     rotationPower = gyroAngleCorrection();
                     break;
                 case SEARCH_FOR_WHITE_LINE:
                     if (distance > DISTANCE_FROM_WALL_FAR + 5) {
-                        forwardPower = .075;
+                        forwardPower = .2;
                     } else if (distance < DISTANCE_FROM_WALL_FAR) {
-                        forwardPower = -.075;
+                        forwardPower = -.2;
                     } else
                         forwardPower = 0;
                     if (robot.isLineDetected()) {
                         currentState = State.FOLLOW_LINE;
+                        time = getRuntime();
                     }
-                    sidePower = -.05 * directionMultiplier;
+                    sidePower = -.15 * directionMultiplier;
+                    if (getRuntime() > time + 8) {
+                        currentState = State.MOVE_LEFT;
+                        time = getRuntime();
+                    } else if (getRuntime() > time + 5) {
+                    } else if (getRuntime() > time + 3) {
+                        sidePower = -sidePower;
+                    }
                     rotationPower = alignToWall();
                     break;
                 case FOLLOW_LINE:
-                    rotationPower = alignToWall();
                     if (distance > DISTANCE_FROM_WALL_FAR) {
-                        forwardPower = .1;
-                    } else if (distance < DISTANCE_FROM_WALL_CLOSE)
-                        forwardPower = -.05;
-                    else if (distance > DISTANCE_FROM_WALL_CLOSE + 4)
+                        forwardPower = .3;
+                    } else if (distance > DISTANCE_FROM_WALL_CLOSE)
                         forwardPower = .05;
+                    else if (distance < DISTANCE_FROM_WALL_CLOSE + 3)
+                        forwardPower = -.05;
                     else
                         forwardPower = 0;
 
                     if (robot.isLineDetected()) {
                         sidePower = -.025 * directionMultiplier;
+                        time = getRuntime();
                     } else
                         sidePower = .025 * directionMultiplier;
-
-                    if (rotationPower == 0 && forwardPower == 0) {
-                        sidePower = 0;
-                        currentState = State.DETECT_COLOR;
-                        robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
-                        robot.gyro.centerOffset();
+                    if (getRuntime() > time + 4.5) {
+                        currentState = State.MOVE_LEFT;
                         time = getRuntime();
-                        nextState = State.TURN_BUTTON_ALIGNMENT;
+                    } else if (getRuntime() > time + 2.5) {
+                    } else if (getRuntime() > time + 1) {
+                        sidePower = -sidePower;
                     }
+                    if (rotationPower == 0 && forwardPower == 0 && robot.isLineDetected()) {
+                        currentState = State.DETECT_COLOR;
+                        time = getRuntime();
+                    }
+                    robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                    rotationPower = alignToWall();
                     break;
                 case DETECT_COLOR:
-                    /**
-                     * robot.setDriveMode(Hardware506.DriveMode.MECANUM);
-                     * colorDetected = robot.getBeaconColor();
-                    if ((getRuntime() < time + 2) && (colorDetected == NONE)) {
-                        if (distance > 21) {
-                            forwardPower = .025;
-                        } else if (distance < 19) {
-                            forwardPower = -.025;
-                        } else
-                            forwardPower = 0;
-                        sidePower = .015 * directionMultiplier;
-                        rotationPower = alignToWall();
-                    } else if ((getRuntime() > time + 1)) {
-                        time = getRuntime();
-                        currentState = State.RETURN_TO_CENTER;
-                    }
-                     **/
-                    rotationPower = turn(7 * directionMultiplier);
-                    if (rotationPower == 0){
-                        colorDetected = robot.getBeaconColor();
-                        if (colorDetected != NONE)
-                            currentState = State.TURN_BUTTON_ALIGNMENT;
+                    colorDetected = robot.getBeaconColor();
+                    if (colorDetected != NONE)
+                        if (colorDetected == getDesiredColor())
+                            currentState = State.PUSH_BUTTON;
                         else {
-                            currentState = State.FOLLOW_LINE;
-                            robot.setDriveMode(Hardware506.DriveMode.MECANUM);
+                            if (Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_LEFT)
+                                    < Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_RIGHT))
+                                robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
+                            else
+                                robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                            currentState = State.WAIT;
+                            waitTime = 1;
+                            nextState = State.PUSH_BUTTON;
                         }
-                    }
-
-
-                    break;
-                case RETURN_TO_CENTER:
-                    if (!robot.isLineDetected() && getRuntime() < time + 2) {
-                        if (distance > 26) {
-                            forwardPower = .025;
-                        } else if (distance < 24) {
-                            forwardPower = -.025;
-                        } else
-                            forwardPower = 0;
-                        sidePower = -.1 * directionMultiplier;
-                        rotationPower = alignToWall();
-                    } else {
-                        currentState = nextState;
-                        if (currentState == State.PUSH_BUTTON) {
-                            robot.gyro.centerOffset();
-                            robot.setDriveMode(Hardware506.DriveMode.MECANUM_WITH_GYRO);
-                        }
-                    }
-                    break;
-                case TURN_BUTTON_ALIGNMENT:
-                    switch (colorDetected) {
-                        case RED:
-                            rotationPower = turn(-7 * directionMultiplier);
-                            break;
-                        case BLUE:
-                            rotationPower = turn(7 * directionMultiplier);
-                            break;
-                        case NONE:
-                            rotationPower = turn(7 * directionMultiplier);
-                            break;
-                    }
-                    if (rotationPower == 0) {
-                        currentState = State.PUSH_BUTTON;
+                    else if (getRuntime() > time + .1) {
                         time = getRuntime();
+                        robot.setSlidePosition(robot.getSlideServoPosition() + .01);
                     }
                     break;
                 case PUSH_BUTTON:
-                    if (getRuntime() > time + 1.5 || distance < 15) {
-                        forwardPower = 0;
-                        //robot.setDriveMode(Hardware506.DriveMode.MECANUM);
-
-                        currentState = State.VERIFY_BEACON_COLOR;
+                    if (getRuntime() > time + 1.5 || distance < 8) {
+                        currentState = State.BACK_UP;
                         time = getRuntime();
-                        nextState = State.VERIFY_BEACON_COLOR;
-
-                    } else if (getRuntime() < time + .5) {
-                        forwardPower = -.1;
+                        fiveSecondDelayTime = getRuntime();
                     } else forwardPower = .15;
+
+                    if (robot.isLineDetected()) {
+                        sidePower = -.025 * directionMultiplier;
+                        time = getRuntime();
+                    } else
+                        sidePower = .025 * directionMultiplier;
+                    rotationPower = alignToWall();
                     break;
-                case VERIFY_BEACON_COLOR:
-                    if (colorDetected == getDesiredColor() || colorDetected == NONE) {
-                        if (movedLeft == 1) {
-                            currentState = State.STOP;
-                        } else
-                            currentState = State.MOVE_LEFT;
-                    } else {
-                        currentState = State.WAIT_FIVE_SECONDS;
+                case BACK_UP:
+                    if (distance > DISTANCE_FROM_WALL_CLOSE)
+                        forwardPower = .05;
+                    else if (distance < DISTANCE_FROM_WALL_CLOSE + 3)
+                        forwardPower = -.2;
+                    else {
+                        currentState = State.VERIFY_WRONG_COLOR_WAS_NOT_PRESSED;
                         time = getRuntime();
                     }
                     break;
-                case WAIT_FIVE_SECONDS:
-                    if (getRuntime() > time + 5) {
+                case VERIFY_WRONG_COLOR_WAS_NOT_PRESSED:
+                    colorDetected = robot.getBeaconColor();
+                    if (colorDetected != getDesiredColor() && colorDetected != NONE) {
+                        waitTime = 5;
+                        time = fiveSecondDelayTime;
+                        currentState = State.WAIT;
+                        nextState = State.PUSH_BUTTON;
+                    } else if (colorDetected == getDesiredColor() || getRuntime() > time + 1) {
+                        if (Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_LEFT)
+                                < Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_RIGHT))
+                            robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
+                        else
+                            robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                        currentState = State.WAIT;
+                        waitTime = 1;
+                        nextState = State.VERIFY_BEACON_WAS_PRESSED;
+                    }
+                    break;
+                case VERIFY_BEACON_WAS_PRESSED:
+                    colorDetected = robot.getBeaconColor();
+                    if (colorDetected == getDesiredColor() || colorDetected == NONE) {
+                        currentState = State.MOVE_LEFT;
+                        time = getRuntime();
+                    } else {
                         currentState = State.PUSH_BUTTON;
+                        time = getRuntime();
+                    }
+                    break;
+                case WAIT:
+                    if (getRuntime() > time + waitTime) {
+                        currentState = nextState;
                     }
                     break;
                 case MOVE_LEFT:
-                    if (getRuntime() < time + .75) {
-                        if (distance > 30) {
-                            forwardPower = .15;
-                        } else if (distance > DISTANCE_FROM_WALL_FAR + 5) {
-                            forwardPower = .05;
+                    if (movedLeft == 1) {
+                        currentState = State.STOP;
+                    } else if (getRuntime() < time + .75) {
+                        robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                        if (distance > DISTANCE_FROM_WALL_FAR + 5) {
+                            forwardPower = .1;
                         } else if (distance < DISTANCE_FROM_WALL_FAR) {
-                            forwardPower = -.05;
+                            forwardPower = -.1;
                         } else
                             forwardPower = 0;
                         sidePower = -1 * directionMultiplier;
@@ -275,18 +295,16 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
                     }
                     break;
                 case STOP:
-                    sidePower = 0;
-                    rotationPower = 0;
-                    forwardPower = 0;
-                    robot.setArmPositionDown(false);
                     break;
             }
 
-            sidePower *= Hardware506.GEAR_RATIO;
-            forwardPower *= Hardware506.GEAR_RATIO;
-            rotationPower *= Hardware506.GEAR_RATIO;
+            sidePower /= Hardware506.GEAR_RATIO;
+            forwardPower /= Hardware506.GEAR_RATIO;
+            rotationPower /= Hardware506.GEAR_RATIO;
 
-            robot.drive(-sidePower, forwardPower, rotationPower);
+            robot.drive(sidePower, -forwardPower, rotationPower);
+            robot.launcherMotor.setPower(launcherPower);
+            robot.sweeperMotor.setPower(sweeperPower);
 
             telemetry.addData("State", currentState);
             telemetry.addData("Ultrasonic Left", robot.leftUltrasonic.getUltrasonicLevel());
