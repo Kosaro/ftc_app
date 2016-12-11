@@ -56,8 +56,12 @@ public class LineDetectorTester extends OpMode
 
     @Override
     public void loop() {
-        telemetry.addData("Light detected", robot.lineDetector.getLightDetected());
-        telemetry.addData("Is line detected", robot.isLineDetected());
+        telemetry.addData("Light detected Left", robot.lineDetectorLeft.getLightDetected());
+        telemetry.addData("Light detected Center", robot.lineDetectorCenter.getLightDetected());
+        telemetry.addData("Light detected Right", robot.lineDetectorRight.getLightDetected());
+        telemetry.addData("Is line detected Left", robot.isLineDetectedLeft());
+        telemetry.addData("Is line detected Center", robot.isLineDetectedCenter());
+        telemetry.addData("Is line detected Right", robot.isLineDetectedRight());
 
     }
 

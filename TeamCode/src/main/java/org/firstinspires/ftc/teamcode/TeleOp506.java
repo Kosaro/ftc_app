@@ -19,11 +19,12 @@ public class TeleOp506 extends OpMode {
     public void init() {
         robot = new Hardware506(hardwareMap);
         robot.setDriveMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-         useGyro = true;
+         useGyro = false;
         previousBackState = false;
         servoDown = false;
         telemetry.addData("Gyro", "Calibrating");
         robot.gyro.calibrate();
+        robot.liftServo.setPosition(Hardware506.LIFT_SERVO_POSITION_UP);
     }
 
     @Override
@@ -65,20 +66,27 @@ public class TeleOp506 extends OpMode {
 
         if(gamepad2.dpad_down){
             servoDown = true;
+            robot.liftServo.setPosition(Hardware506.LIFT_SERVO_POSITION_DOWN);
         }
         else if (gamepad2.dpad_up){
             servoDown = false;
+            robot.liftServo.setPosition(Hardware506.LIFT_SERVO_POSITION_UP);
         }
 
         if (gamepad1.x){
             robot.gyro.centerOffset();
         }
 
+        if (gamepad2.left_trigger > 0 ^ gamepad2.right_trigger > 0){
+            robot.liftMotor.setPower(-gamepad2.left_trigger + gamepad2.right_trigger);
+        }
+
         robot.setReverseDriveTrain(reverseDriveTrain);
         robot.drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
-        robot.setArmPositionDown(servoDown);
+        //(servoDown);
         robot.sweeperMotor.setPower(gamepad2.left_stick_y);
         robot.launcherMotor.setPower(gamepad2.right_stick_y);
+        robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT_LIMIT);
         telemetry.addData("Gyro Heading", robot.gyro.getHeading());
 
     }

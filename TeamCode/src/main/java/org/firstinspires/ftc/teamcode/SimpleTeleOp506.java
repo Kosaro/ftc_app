@@ -87,7 +87,7 @@ public class SimpleTeleOp506 extends OpMode {
         telemetry.addData("Gyro Heading", robot.gyro.getHeading());
         telemetry.addData("Color Detected", robot.getBeaconColor());
         telemetry.addData("Color Detected RGB", String.format("%4d, %4d, %4d", robot.beaconColorSensor.red(), robot.beaconColorSensor.green(), robot.beaconColorSensor.blue()));
-        telemetry.addData("Line Detected", robot.isLineDetected());
+        telemetry.addData("Line Detected", robot.getLineDetected());
         telemetry.addData("Ultrasonic left, right", String.format("%4.2f, %4.2f", robot.leftUltrasonic.getUltrasonicLevel(), robot.rightUltrasonic.getUltrasonicLevel()));
         telemetry.addData("State", "Running");
     }

@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 /**
  * Hardware506 class for the robot. Initializes hardware and contains basic methods
  *
@@ -13,11 +15,14 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class Hardware506 extends Hardware {
 
-    public final static double SLIDE_SERVO_POSITION_LEFT = .35;
-    public final static double SLIDE_SERVO_POSITION_RIGHT = .5;
-    public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .35;
-    public final static double SLiDE_SERVO_POSITION_RIGHT_LIMIT = .5;
-    final static double GEAR_RATIO = 3.0 / 2;
+    public final static double SLIDE_SERVO_POSITION_LEFT = .5;
+    public final static double SLIDE_SERVO_POSITION_RIGHT = .35;
+    public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .5;
+    public final static double SLiDE_SERVO_POSITION_RIGHT_LIMIT = .35;
+    final static double GEAR_RATIO = 1;
+
+    public final static double LIFT_SERVO_POSITION_UP = .24;
+    public final static double LIFT_SERVO_POSITION_DOWN = .4;
 
 
     DcMotorWrapper leftFrontMotor;
@@ -26,12 +31,17 @@ public class Hardware506 extends Hardware {
     DcMotorWrapper rightRearMotor;
     DcMotorWrapper sweeperMotor;
     DcMotorWrapper launcherMotor;
+    DcMotorWrapper liftMotor;
     ServoWrapper slideServo;
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
     GyroSensorWrapper gyro;
-    OpticalDistanceSensorWrapper lineDetector;
+    OpticalDistanceSensorWrapper lineDetectorCenter;
+    OpticalDistanceSensorWrapper lineDetectorLeft;
+    OpticalDistanceSensorWrapper lineDetectorRight;
+
     ColorSensorWrapper beaconColorSensor;
+    ServoWrapper liftServo;
 
     enum ColorDetected {
         BLUE("Blue"),
@@ -57,7 +67,6 @@ public class Hardware506 extends Hardware {
 
     DriveMode currentDriveMode;
     boolean reverseDriveTrain;
-    double slideServoPosition;
 
     /**
      * Constructor initializes hardware map
@@ -80,19 +89,23 @@ public class Hardware506 extends Hardware {
         leftUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "lu"));
         rightUltrasonic = new UltrasonicSensorWrapper(getDevice(ultrasonicSensor, "ru"));
         gyro = new GyroSensorWrapper(getDevice(gyroSensor, "g"));
-        lineDetector = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ld"));
+        lineDetectorCenter = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ldc"));
+        lineDetectorRight = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ldr"));
+        lineDetectorLeft = new OpticalDistanceSensorWrapper(getDevice(opticalDistanceSensor, "ldl"));
         beaconColorSensor = new ColorSensorWrapper(getDevice(colorSensor, "bc"));
         slideServo = new ServoWrapper(getDevice(servo, "as"));
+        liftServo = new ServoWrapper(getDevice(servo, "ls"));
+        liftMotor = new DcMotorWrapper(getDevice(dcMotor, "liftm"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         sweeperMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        launcherMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        launcherMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         beaconColorSensor.enableLed(false);
-        setSlidePosition(SLIDE_SERVO_POSITION_LEFT);
+        //setSlidePosition(SLIDE_SERVO_POSITION_LEFT);
         reverseDriveTrain = false;
     }
 
@@ -173,23 +186,69 @@ public class Hardware506 extends Hardware {
     public double getUltrasonicAverageDistance() {
         double left = leftUltrasonic.getUltrasonicLevel();
         double right = rightUltrasonic.getUltrasonicLevel();
-        if (left == 0) {
+        if (left < 10) {
             right *= 2;
+            left = 0;
         }
-        if (right == 0)
+        if (right < 10) {
             left *= 2;
+            right = 0;
+        }
 
         if (left == 0 && right == 0)
             left = 500;
         return (left + right) / 2.0;
     }
 
-    public boolean isLineDetected() {
-        double lightThreshold = .20;
-        if (lineDetector.getLightDetected() > lightThreshold) {
+    private boolean isLineDetected(OpticalDistanceSensorWrapper sensor) {
+        double lightThreshold = .04;
+        if (sensor.getLightDetected() > lightThreshold) {
             return true;
         }
         return false;
+    }
+
+    public boolean isLineDetectedLeft() {
+        return isLineDetected(lineDetectorLeft);
+    }
+
+    public boolean isLineDetectedRight() {
+        return isLineDetected(lineDetectorRight);
+    }
+
+    public boolean isLineDetectedCenter() {
+        return isLineDetected(lineDetectorCenter);
+    }
+
+    public LineDetected getLineDetected() {
+        if (isLineDetectedLeft()) {
+            return LineDetected.LEFT;
+        } else if (isLineDetectedRight()) {
+            return LineDetected.RIGHT;
+        } else if (isLineDetectedCenter()) {
+            return LineDetected.CENTER;
+        } else {
+            return LineDetected.NONE;
+        }
+    }
+
+
+    enum LineDetected {
+        LEFT("Left"),
+        CENTER("Center"),
+        RIGHT("Right"),
+        NONE("None");
+
+        String description;
+
+        public String toString() {
+            return description;
+        }
+
+        LineDetected(String description) {
+            this.description = description;
+        }
+
     }
 
     public void setReverseDriveTrain(boolean reverseDriveTrain) {
@@ -197,25 +256,21 @@ public class Hardware506 extends Hardware {
     }
 
     public ColorDetected getBeaconColor() {
-        double blueColorThreshold = 3;
-        double redColorThreshold = 3;
+        double blueColorThreshold = 2;
+        double redColorThreshold = 2;
         double blueStrength = beaconColorSensor.blue();
         double redStrength = beaconColorSensor.red();
-        if (blueStrength > blueColorThreshold && blueStrength > redStrength) {
+        if (blueStrength >= blueColorThreshold && blueStrength > redStrength) {
             return ColorDetected.BLUE;
-        } else if (redStrength > redColorThreshold && blueStrength < redStrength) {
+        } else if (redStrength >= redColorThreshold && blueStrength < redStrength) {
             return ColorDetected.RED;
         } else
             return ColorDetected.NONE;
     }
 
     public void setSlidePosition(double position) {
-        position = Range.clip(position, SLIDE_SERVO_POSITION_LEFT_LIMIT, SLiDE_SERVO_POSITION_RIGHT_LIMIT);
+        position = Range.clip(position, SLiDE_SERVO_POSITION_RIGHT_LIMIT, SLIDE_SERVO_POSITION_LEFT_LIMIT);
         slideServo.setPosition(position);
-        slideServoPosition = position;
     }
 
-    public double getSlideServoPosition() {
-        return slideServoPosition;
-    }
 }

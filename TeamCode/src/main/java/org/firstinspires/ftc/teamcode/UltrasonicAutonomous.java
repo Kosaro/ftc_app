@@ -14,13 +14,13 @@ import static org.firstinspires.ftc.teamcode.Hardware506.ColorDetected.RED;
  * Autonomous without vuforia
  *
  * @author Oscar Kosar-Kosarewicz
- * @version 11/27/16
+ * @version 12/3/16
  */
 @Autonomous(name = "Ultrasonic Autonomous", group = "Autonomous")
 @Disabled
 public abstract class UltrasonicAutonomous extends LinearOpMode {
-    final static int DISTANCE_FROM_WALL_FAR = 30;
-    final static int DISTANCE_FROM_WALL_CLOSE = 22;
+    final static int DISTANCE_FROM_WALL_FAR = 35;
+    final static int DISTANCE_FROM_WALL_CLOSE = 24;
     Hardware506 robot;
     double sidePower;
     double forwardPower;
@@ -28,10 +28,14 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
     double sweeperPower;
     double launcherPower;
     int directionMultiplier;
+    boolean lineFound;
+    Hardware506.LineDetected lastDetectedPosition;
+    Hardware506.LineDetected currentLinePosition;
 
 
     enum State {
         DRIVE_AWAY_FROM_WALL("Drive Away from Wall"),
+        DRIVE_BEFORE_TURN("Drive Before Turn"),
         TURN_TOWARD_VORTEX("Turn Toward Center Vortex"),
         SHOOT_PARTICLE("Shoot Particle"),
         TURN_TOWARD_BEACON("Turn Toward Beacon"),
@@ -44,6 +48,7 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
         VERIFY_WRONG_COLOR_WAS_NOT_PRESSED("Verify Wrong Color Was Not Pressed"),
         VERIFY_BEACON_WAS_PRESSED("Verify Beacon Was Pressed"),
         WAIT("Wait"),
+        WAIT_FOR_SERVO("Wait For Servo"),
         MOVE_LEFT("Move Left"),
         STOP("Stop");
 
@@ -78,7 +83,11 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
         int movedLeft = 0;
         Hardware506.ColorDetected colorDetected = NONE;
         double time = getRuntime();
+        double incrementTime = getRuntime();
         double fiveSecondDelayTime = 0;
+        boolean reverseSidePower = false;
+        lastDetectedPosition = Hardware506.LineDetected.NONE;
+        lineFound = false;
         double waitTime = 0;
         robot.gyro.calibrate();
         telemetry.addData("State", "Calibrating Gyro");
@@ -90,6 +99,7 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        robot.setSlidePosition(Hardware506.SLiDE_SERVO_POSITION_RIGHT_LIMIT);
 
         while (opModeIsActive()) {
             double distance = robot.getUltrasonicAverageDistance();
@@ -100,14 +110,25 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
             launcherPower = 0;
             switch (currentState) {
                 case DRIVE_AWAY_FROM_WALL:
-                    sidePower = -.5;
+                    sidePower = -.7;
                     rotationPower = gyroAngleCorrection();
-                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 1400 / Hardware506.GEAR_RATIO) {
-                        currentState = State.TURN_TOWARD_VORTEX;
+                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 1550 / Hardware506.GEAR_RATIO) {
+                        currentState = State.SHOOT_PARTICLE;
+                        time = getRuntime();
+                    }
+                    break;
+                case DRIVE_BEFORE_TURN:
+                    sidePower = -.7;
+                    rotationPower = gyroAngleCorrection();
+                    if (Math.abs(robot.leftFrontMotor.getCurrentPosition()) > 2650 / Hardware506.GEAR_RATIO) {
+                        currentState = State.TURN_TOWARD_BEACON;
                     }
                     break;
                 case TURN_TOWARD_VORTEX:
-                    rotationPower = turn(-20 * directionMultiplier);
+                    rotationPower = trueTurn(-25 * directionMultiplier);
+                    if (getDesiredColor() == getDesiredColor()) {
+                        rotationPower = -25;
+                    }
                     if (rotationPower == 0) {
                         robot.gyro.centerOffset();
                         currentState = State.SHOOT_PARTICLE;
@@ -115,108 +136,137 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
                     }
                     break;
                 case SHOOT_PARTICLE:
-                    if (getRuntime() < time + 5) {
+                    if (getRuntime() < time + 2) {
                         if (getRuntime() > time + 1.5 && getRuntime() < time + 3.5) {
-                            sweeperPower = 1;
+                            //sweeperPower = 1;
                         }
                         launcherPower = 1;
                     } else {
-                        currentState = State.TURN_TOWARD_BEACON;
+                        currentState = State.DRIVE_BEFORE_TURN;
                     }
                     break;
                 case TURN_TOWARD_BEACON:
-                    int turnAngle = 10 * directionMultiplier;
+                    int turnAngle = -14 * directionMultiplier;
                     if (getDesiredColor() == RED) {
-                        turnAngle += 180;
+                        turnAngle = -16;
                     }
-                    rotationPower = turn(turnAngle);
+                    rotationPower = trueTurn(turnAngle);
 
                     if (rotationPower == 0) {
                         robot.gyro.centerOffset();
                         currentState = State.DRIVE_TO_WALL;
+                        robot.setDriveMode(Hardware506.DriveMode.MECANUM);
                         robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
                     }
                     break;
                 case DRIVE_TO_WALL:
-                    if (distance > 70) {
+                    //rotationPower = gyroAngleCorrection();
+                    if (distance > 120) {
+                        forwardPower = 1;
+                    } else if (distance > 80) {
                         forwardPower = .5;
-                    } else if (distance > 50) {
+                    } else if (distance > 40) {
                         forwardPower = .3;
-                    } else if (distance < 40) {
-                        currentState = State.SEARCH_FOR_WHITE_LINE;
-                        robot.setDriveMode(Hardware506.DriveMode.MECANUM);
-                        time = getRuntime();
+                    } else {
+                        rotationPower = trueTurn(0);
+                        forwardPower = 0;
+                        if (isParallel()) {
+                            currentState = State.SEARCH_FOR_WHITE_LINE;
+                            robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                            robot.setDriveMode(Hardware506.DriveMode.MECANUM);
+                            time = getRuntime();
+                        }
                     }
-                    rotationPower = gyroAngleCorrection();
                     break;
                 case SEARCH_FOR_WHITE_LINE:
-                    if (distance > DISTANCE_FROM_WALL_FAR + 5) {
-                        forwardPower = .2;
+                    if (distance < 20) {
+                        forwardPower = -.5;
+                    } else if (distance > DISTANCE_FROM_WALL_FAR + 5) {
+                        forwardPower = .15;
                     } else if (distance < DISTANCE_FROM_WALL_FAR) {
-                        forwardPower = -.2;
+                        forwardPower = -.15;
                     } else
                         forwardPower = 0;
-                    if (robot.isLineDetected()) {
+                    if (robot.getLineDetected() != Hardware506.LineDetected.NONE) {
+                        lastDetectedPosition = robot.getLineDetected();
                         currentState = State.FOLLOW_LINE;
+                        robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                        lineFound = true;
                         time = getRuntime();
                     }
-                    sidePower = -.15 * directionMultiplier;
-                    if (getRuntime() > time + 8) {
+                    sidePower = -.25 * directionMultiplier;
+                    if (getRuntime() > time + 14) {
                         currentState = State.MOVE_LEFT;
                         time = getRuntime();
+                    } else if (getRuntime() > time + 9) {
                     } else if (getRuntime() > time + 5) {
-                    } else if (getRuntime() > time + 3) {
                         sidePower = -sidePower;
                     }
-                    rotationPower = alignToWall();
+
+                    if (lineFound)
+                        rotationPower = alignToWall();
+                    else {
+                        rotationPower = trueTurn(0);
+                    }
+                    if (!isParallel()) {
+                        sidePower = 0;
+                        forwardPower = 0;
+                        time = getRuntime();
+                    }
                     break;
                 case FOLLOW_LINE:
                     if (distance > DISTANCE_FROM_WALL_FAR) {
-                        forwardPower = .3;
-                    } else if (distance > DISTANCE_FROM_WALL_CLOSE)
-                        forwardPower = .05;
-                    else if (distance < DISTANCE_FROM_WALL_CLOSE + 3)
-                        forwardPower = -.05;
+                        forwardPower = .5;
+                    } else if (distance > DISTANCE_FROM_WALL_CLOSE + 1)
+                        forwardPower = .15;
+                    else if (distance < DISTANCE_FROM_WALL_CLOSE)
+                        forwardPower = -.2;
                     else
                         forwardPower = 0;
 
-                    if (robot.isLineDetected()) {
-                        sidePower = -.025 * directionMultiplier;
-                        time = getRuntime();
-                    } else
-                        sidePower = .025 * directionMultiplier;
-                    if (getRuntime() > time + 4.5) {
-                        currentState = State.MOVE_LEFT;
-                        time = getRuntime();
-                    } else if (getRuntime() > time + 2.5) {
-                    } else if (getRuntime() > time + 1) {
-                        sidePower = -sidePower;
-                    }
-                    if (rotationPower == 0 && forwardPower == 0 && robot.isLineDetected()) {
-                        currentState = State.DETECT_COLOR;
-                        time = getRuntime();
-                    }
+
+                    alignToLine();
+
+
+                    if (isParallel() && forwardPower == 0 && currentLinePosition == Hardware506.LineDetected.CENTER)
+                        if ((getDesiredColor() == BLUE) || (getDesiredColor() == RED && reverseSidePower == true)) {
+                            currentState = State.DETECT_COLOR;
+                            time = getRuntime();
+                        }
                     robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
                     rotationPower = alignToWall();
+                    if (!isParallel()) {
+                        sidePower = 0;
+                        forwardPower = 0;
+                    }
                     break;
                 case DETECT_COLOR:
                     colorDetected = robot.getBeaconColor();
-                    if (colorDetected != NONE)
+                    if (currentLinePosition != Hardware506.LineDetected.CENTER) {
+                        alignToLine();
+                    } else if (colorDetected != NONE)
                         if (colorDetected == getDesiredColor())
                             currentState = State.PUSH_BUTTON;
                         else {
-                            if (Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_LEFT)
-                                    < Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_RIGHT))
-                                robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
-                            else
-                                robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
-                            currentState = State.WAIT;
-                            waitTime = 1;
+                            /**
+                             if (Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_LEFT)
+                             < Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_RIGHT))
+                             robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
+                             else
+                             robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+                             */
+                            waitTime = 0;
+                            robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+
+                            currentState = State.WAIT_FOR_SERVO;
+                            incrementTime = getRuntime();
+                            waitTime = 1.5;
                             nextState = State.PUSH_BUTTON;
+                            time = getRuntime();
                         }
                     else if (getRuntime() > time + .1) {
                         time = getRuntime();
-                        robot.setSlidePosition(robot.getSlideServoPosition() + .01);
+                        robot.setSlidePosition(robot.slideServo.getPosition() - .01);
                     }
                     break;
                 case PUSH_BUTTON:
@@ -224,24 +274,27 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
                         currentState = State.BACK_UP;
                         time = getRuntime();
                         fiveSecondDelayTime = getRuntime();
-                    } else forwardPower = .15;
+                    } else forwardPower = .3;
 
-                    if (robot.isLineDetected()) {
-                        sidePower = -.025 * directionMultiplier;
-                        time = getRuntime();
-                    } else
-                        sidePower = .025 * directionMultiplier;
+                    if (currentLinePosition != Hardware506.LineDetected.CENTER) {
+                        alignToLine();
+                    }
+
                     rotationPower = alignToWall();
                     break;
                 case BACK_UP:
-                    if (distance > DISTANCE_FROM_WALL_CLOSE)
+                    if (distance > DISTANCE_FROM_WALL_CLOSE + 2)
                         forwardPower = .05;
-                    else if (distance < DISTANCE_FROM_WALL_CLOSE + 3)
+                    else if (distance < DISTANCE_FROM_WALL_CLOSE)
                         forwardPower = -.2;
                     else {
                         currentState = State.VERIFY_WRONG_COLOR_WAS_NOT_PRESSED;
                         time = getRuntime();
                     }
+                    if (currentLinePosition != Hardware506.LineDetected.CENTER) {
+                        alignToLine();
+                    }
+                    rotationPower = alignToWall();
                     break;
                 case VERIFY_WRONG_COLOR_WAS_NOT_PRESSED:
                     colorDetected = robot.getBeaconColor();
@@ -251,14 +304,18 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
                         currentState = State.WAIT;
                         nextState = State.PUSH_BUTTON;
                     } else if (colorDetected == getDesiredColor() || getRuntime() > time + 1) {
-                        if (Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_LEFT)
-                                < Math.abs(robot.getSlideServoPosition() - robot.SLIDE_SERVO_POSITION_RIGHT))
+                        if (Math.abs(robot.slideServo.getPosition() - robot.SLIDE_SERVO_POSITION_LEFT)
+                                < Math.abs(robot.slideServo.getPosition() - robot.SLIDE_SERVO_POSITION_RIGHT))
                             robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
                         else
                             robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
                         currentState = State.WAIT;
-                        waitTime = 1;
+                        waitTime = 2;
                         nextState = State.VERIFY_BEACON_WAS_PRESSED;
+
+                        //skipping 2nd verify
+                        currentState = State.MOVE_LEFT;
+                        time = getRuntime();
                     }
                     break;
                 case VERIFY_BEACON_WAS_PRESSED:
@@ -274,12 +331,28 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
                 case WAIT:
                     if (getRuntime() > time + waitTime) {
                         currentState = nextState;
+                        time = getRuntime();
+                    }
+                    break;
+                case WAIT_FOR_SERVO:
+
+                    if ((robot.slideServo.getPosition() <= Hardware506.SLIDE_SERVO_POSITION_RIGHT) || (robot.getBeaconColor() == getDesiredColor())) {
+                        if ((robot.slideServo.getPosition() < Hardware506.SLIDE_SERVO_POSITION_RIGHT)){
+                            robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
+                        }
+                        currentState = nextState;
+                        time = getRuntime();
+                    }else {
+                        if (getRuntime() > incrementTime + .1){
+                            incrementTime = getRuntime();
+                            robot.setSlidePosition(robot.slideServo.getPosition() - .0075);
+                        }
                     }
                     break;
                 case MOVE_LEFT:
                     if (movedLeft == 1) {
                         currentState = State.STOP;
-                    } else if (getRuntime() < time + .75) {
+                    } else if (getRuntime() < time + 1) {
                         robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
                         if (distance > DISTANCE_FROM_WALL_FAR + 5) {
                             forwardPower = .1;
@@ -295,6 +368,7 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
                     }
                     break;
                 case STOP:
+                    robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_LEFT_LIMIT);
                     break;
             }
 
@@ -302,7 +376,7 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
             forwardPower /= Hardware506.GEAR_RATIO;
             rotationPower /= Hardware506.GEAR_RATIO;
 
-            robot.drive(sidePower, -forwardPower, rotationPower);
+            robot.drive(-sidePower, forwardPower, rotationPower);
             robot.launcherMotor.setPower(launcherPower);
             robot.sweeperMotor.setPower(sweeperPower);
 
@@ -311,7 +385,8 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
             telemetry.addData("Ultrasonic Right", robot.rightUltrasonic.getUltrasonicLevel());
             telemetry.addData("Ultrasonic Average", distance);
             telemetry.addData("Gyro Heading", robot.gyro.getHeading());
-            telemetry.addData("Line Detected", robot.isLineDetected());
+            telemetry.addData("Gyro True Heading", robot.gyro.getTrueHeading());
+            telemetry.addData("Line Detected", robot.getLineDetected());
             telemetry.addData("Beacon Color Detected", robot.getBeaconColor());
 
             telemetry.update();
@@ -328,8 +403,8 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
 
     public double alignToWall() {
         double left = robot.leftUltrasonic.getUltrasonicLevel();
-        double right = robot.rightUltrasonic.getUltrasonicLevel();
-        if (left + right / 2.0 < 40) {
+        double right = robot.rightUltrasonic.getUltrasonicLevel() - 1;
+        if (left + right / 2.0 < 80) {
             if (Math.abs(left - right) > 2) {
                 if (left > right)
                     return .2;
@@ -338,6 +413,34 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
             }
         }
         return 0;
+    }
+
+    public void alignToLine() {
+        currentLinePosition = robot.getLineDetected();
+        if (currentLinePosition != Hardware506.LineDetected.NONE) {
+            lastDetectedPosition = currentLinePosition;
+            time = getRuntime();
+        }
+
+
+        if (lastDetectedPosition == Hardware506.LineDetected.CENTER) {
+            sidePower = 0;
+        } else if (lastDetectedPosition == Hardware506.LineDetected.LEFT) {
+            sidePower = -.15;
+        } else if (lastDetectedPosition == Hardware506.LineDetected.RIGHT)
+            sidePower = .15;
+
+        if (currentLinePosition == Hardware506.LineDetected.NONE) {
+            if (sidePower == 0) {
+                sidePower = .15;
+            }
+            if (getRuntime() > time + 4.5) {
+                currentState = State.MOVE_LEFT;
+                time = getRuntime();
+            } else if (getRuntime() > time + 1.5) {
+                sidePower = -sidePower;
+            }
+        }
     }
 
     public double gyroAngleCorrection() {
@@ -360,15 +463,86 @@ public abstract class UltrasonicAutonomous extends LinearOpMode {
             heading -= 180;
         }
 
+        double turnPower;
+        if (Math.abs(heading - finalHeading) > 20) {
+            turnPower = .5;
+        } else if (Math.abs(heading - finalHeading) > 5) {
+            turnPower = .3;
+        } else {
+            turnPower = .1;
+        }
         if (Math.abs(heading - finalHeading) < 3) {
             return 0;
         }
         if (heading < finalHeading)
-            return .05;
+            return turnPower;
         else if (heading > finalHeading)
-            return -.05;
+            return -turnPower;
         else
             return 0;
+    }
+
+    public double trueTurn(double finalHeading) {
+        int heading = robot.gyro.getTrueHeading();
+        if (getDesiredColor() == RED) {
+            heading += 180;
+            heading %= 360;
+        }
+
+        if (heading > 180) { // convert 0 - 360 range of heading to -180 - 180
+            heading += 180;
+            heading %= 360;
+            heading -= 180;
+        }
+
+        double turnPower;
+        if (Math.abs(heading - finalHeading) > 20) {
+            turnPower = .5;
+        } else if (Math.abs(heading - finalHeading) > 10) {
+            turnPower = .3;
+        } else if (Math.abs(heading - finalHeading) > 5) {
+            turnPower = .1;
+        } else {
+            turnPower = .1;
+        }
+        if (Math.abs(heading - finalHeading) < 1) {
+            return 0;
+        }
+        if (heading < finalHeading)
+            return turnPower;
+        else if (heading > finalHeading)
+            return -turnPower;
+        else
+            return 0;
+    }
+
+    public boolean isParallel() {
+        if (lineFound) {
+            double left = robot.leftUltrasonic.getUltrasonicLevel();
+            double right = robot.rightUltrasonic.getUltrasonicLevel();
+            if (Math.abs(left - right) > 4) {
+                {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            int heading = robot.gyro.getTrueHeading();
+            if (getDesiredColor() == RED) {
+                heading += 180;
+                heading %= 360;
+            }
+            if (heading > 180) { // convert 0 - 360 range of heading to -180 - 180
+                heading += 180;
+                heading %= 360;
+                heading -= 180;
+            }
+            if (Math.abs(heading) > 5) {
+                return false;
+            } else {
+                return true;
+            }
+        }
     }
 
     public abstract Hardware506.ColorDetected getDesiredColor();

@@ -18,7 +18,13 @@ public class ServoTester extends OpMode
     @Override
     public void loop() {
         double position = gamepad1.right_trigger;
-        robot.armServo.setPosition(position);
+        //robot.slideServo.setPosition(position);
+        if (gamepad1.a){
+            robot.slideServo.setPosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT);
+        }
+        else{
+            robot.slideServo.setPosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
+        }
         telemetry.addData("Servo Position", position);
     }
 }
