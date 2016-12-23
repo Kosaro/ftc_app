@@ -25,6 +25,7 @@ public class ServoTester extends OpMode
         else{
             robot.slideServo.setPosition(Hardware506.SLIDE_SERVO_POSITION_LEFT);
         }
-        telemetry.addData("Servo Position", position);
+        robot.slideServo.setPosition(gamepad1.left_trigger);
+        telemetry.addData("Servo Position", gamepad1.left_trigger);
     }
 }

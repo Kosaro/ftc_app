@@ -5,8 +5,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 /**
  * Hardware506 class for the robot. Initializes hardware and contains basic methods
  *
@@ -17,12 +15,13 @@ public class Hardware506 extends Hardware {
 
     public final static double SLIDE_SERVO_POSITION_LEFT = .5;
     public final static double SLIDE_SERVO_POSITION_RIGHT = .35;
-    public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .5;
-    public final static double SLiDE_SERVO_POSITION_RIGHT_LIMIT = .35;
+    public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .51;
+    public final static double SLIDE_SERVO_POSITION_RIGHT_LIMIT = .25;
     final static double GEAR_RATIO = 1;
 
-    public final static double LIFT_SERVO_POSITION_UP = .24;
-    public final static double LIFT_SERVO_POSITION_DOWN = .4;
+    public final static double LIFT_SERVO_POSITION_UP = .78;
+    public final static double LIFT_SERVO_POSITION_DOWN = 1;
+    double LIGHT_THRESHHOLD = .04;
 
 
     DcMotorWrapper leftFrontMotor;
@@ -31,7 +30,8 @@ public class Hardware506 extends Hardware {
     DcMotorWrapper rightRearMotor;
     DcMotorWrapper sweeperMotor;
     DcMotorWrapper launcherMotor;
-    DcMotorWrapper liftMotor;
+    DcMotorWrapper liftMotor1;
+    DcMotorWrapper liftMotor2;
     ServoWrapper slideServo;
     UltrasonicSensorWrapper leftUltrasonic;
     UltrasonicSensorWrapper rightUltrasonic;
@@ -95,7 +95,8 @@ public class Hardware506 extends Hardware {
         beaconColorSensor = new ColorSensorWrapper(getDevice(colorSensor, "bc"));
         slideServo = new ServoWrapper(getDevice(servo, "as"));
         liftServo = new ServoWrapper(getDevice(servo, "ls"));
-        liftMotor = new DcMotorWrapper(getDevice(dcMotor, "liftm"));
+        liftMotor1 = new DcMotorWrapper(getDevice(dcMotor, "liftm1"));
+        liftMotor2 = new DcMotorWrapper(getDevice(dcMotor, "liftm2"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -103,9 +104,12 @@ public class Hardware506 extends Hardware {
         rightFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         sweeperMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         launcherMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        liftMotor1.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
 
         beaconColorSensor.enableLed(false);
-        //setSlidePosition(SLIDE_SERVO_POSITION_LEFT);
+        setSlidePosition(SLIDE_SERVO_POSITION_LEFT_LIMIT);
+        liftServo.setPosition(LIFT_SERVO_POSITION_UP);
         reverseDriveTrain = false;
     }
 
@@ -201,8 +205,7 @@ public class Hardware506 extends Hardware {
     }
 
     private boolean isLineDetected(OpticalDistanceSensorWrapper sensor) {
-        double lightThreshold = .04;
-        if (sensor.getLightDetected() > lightThreshold) {
+        if (sensor.getLightDetected() > LIGHT_THRESHHOLD) {
             return true;
         }
         return false;
@@ -269,7 +272,7 @@ public class Hardware506 extends Hardware {
     }
 
     public void setSlidePosition(double position) {
-        position = Range.clip(position, SLiDE_SERVO_POSITION_RIGHT_LIMIT, SLIDE_SERVO_POSITION_LEFT_LIMIT);
+        position = Range.clip(position, SLIDE_SERVO_POSITION_RIGHT_LIMIT, SLIDE_SERVO_POSITION_LEFT_LIMIT);
         slideServo.setPosition(position);
     }
 

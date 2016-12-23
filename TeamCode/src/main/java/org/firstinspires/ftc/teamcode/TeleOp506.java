@@ -78,11 +78,18 @@ public class TeleOp506 extends OpMode {
         }
 
         if (gamepad2.left_trigger > 0 ^ gamepad2.right_trigger > 0){
-            robot.liftMotor.setPower(-gamepad2.left_trigger + gamepad2.right_trigger);
+            robot.liftMotor1.setPower(-gamepad2.left_trigger + gamepad2.right_trigger);
+            robot.liftMotor2.setPower(-gamepad2.left_trigger + gamepad2.right_trigger);
+        }else{
+            robot.liftMotor1.setPower(0);
+            robot.liftMotor2.setPower(0);
         }
 
         robot.setReverseDriveTrain(reverseDriveTrain);
-        robot.drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        if (gamepad1.right_bumper){
+            robot.drive(Hardware.power(-gamepad1.left_stick_y, 2), Hardware.power(gamepad1.left_stick_x, 2), Hardware.power(gamepad1.right_stick_x, 2));
+        }else
+            robot.drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         //(servoDown);
         robot.sweeperMotor.setPower(gamepad2.left_stick_y);
         robot.launcherMotor.setPower(gamepad2.right_stick_y);

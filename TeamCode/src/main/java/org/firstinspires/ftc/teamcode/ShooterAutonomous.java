@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
@@ -84,7 +83,7 @@ public abstract class ShooterAutonomous extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        robot.setSlidePosition(Hardware506.SLiDE_SERVO_POSITION_RIGHT_LIMIT);
+        robot.setSlidePosition(Hardware506.SLIDE_SERVO_POSITION_RIGHT_LIMIT);
         currentState = State.WAIT;
         waitTime = 5;
         nextState = State.DRIVE_AWAY_FROM_WALL;
