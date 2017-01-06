@@ -13,7 +13,8 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class Hardware506 extends Hardware {
 
-    public final static double SLIDE_SERVO_POSITION_LEFT = .5;
+    public final static double SLIDE_SERVO_POSITION_LEFT = .47;
+    public final static double SLIDE_SERVO_POSITION_CENTER = .40;
     public final static double SLIDE_SERVO_POSITION_RIGHT = .35;
     public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .51;
     public final static double SLIDE_SERVO_POSITION_RIGHT_LIMIT = .25;
@@ -39,6 +40,7 @@ public class Hardware506 extends Hardware {
     OpticalDistanceSensorWrapper lineDetectorCenter;
     OpticalDistanceSensorWrapper lineDetectorLeft;
     OpticalDistanceSensorWrapper lineDetectorRight;
+    MRCompassSensorWrapper compass;
 
     ColorSensorWrapper beaconColorSensor;
     ServoWrapper liftServo;
@@ -97,13 +99,14 @@ public class Hardware506 extends Hardware {
         liftServo = new ServoWrapper(getDevice(servo, "ls"));
         liftMotor1 = new DcMotorWrapper(getDevice(dcMotor, "liftm1"));
         liftMotor2 = new DcMotorWrapper(getDevice(dcMotor, "liftm2"));
+        compass = new MRCompassSensorWrapper(getDevice(modernRoboticsI2cCompassSensor, "cs"));
 
         leftFrontMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftRearMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         rightRearMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFrontMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         sweeperMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        launcherMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        launcherMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         liftMotor1.setDirection(DcMotorSimple.Direction.FORWARD);
         liftMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
 
@@ -190,13 +193,15 @@ public class Hardware506 extends Hardware {
     public double getUltrasonicAverageDistance() {
         double left = leftUltrasonic.getUltrasonicLevel();
         double right = rightUltrasonic.getUltrasonicLevel();
-        if (left < 10) {
-            right *= 2;
-            left = 0;
-        }
-        if (right < 10) {
+
+        if (right < 5 || right == 255) {
             left *= 2;
             right = 0;
+        }
+
+        if (left < 5 || left == 255) {
+            right *= 2;
+            left = 0;
         }
 
         if (left == 0 && right == 0)

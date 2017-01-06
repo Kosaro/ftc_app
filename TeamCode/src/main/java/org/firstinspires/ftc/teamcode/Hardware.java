@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.ftccommon.DbgLog;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cCompassSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.CompassSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
@@ -14,6 +16,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +64,15 @@ public abstract class Hardware {
     public HardwareDevice getDevice(HardwareMap.DeviceMapping<DcMotor> deviceMapping, String name) {
         try {
             return deviceMapping.get(name);
+        } catch (Exception e) {
+            DbgLog.error("Device not found: " + name);
+            return null;
+        }
+    }
+
+    public HardwareDevice getDevice(Class<? extends HardwareDevice> classOrInterface, String name) {
+        try {
+            return (HardwareDevice) hardwareMap.get(classOrInterface, name);
         } catch (Exception e) {
             DbgLog.error("Device not found: " + name);
             return null;
@@ -126,6 +139,7 @@ public abstract class Hardware {
     protected HardwareMap.DeviceMapping ultrasonicSensor;
     protected HardwareMap.DeviceMapping voltageSensor;
     protected HardwareMap.DeviceMapping touchSensorMultiplexer;
+    protected Class modernRoboticsI2cCompassSensor = ModernRoboticsI2cCompassSensor.class;
 
 
 
@@ -183,6 +197,13 @@ public abstract class Hardware {
                 return motor.getController();
             }
             return null;
+        }
+
+        public double getPower() {
+            if (motor != null) {
+                return motor.getPower();
+            }
+            return 0;
         }
 
         public int getMaxSpeed() {
@@ -895,6 +916,114 @@ public abstract class Hardware {
             result *= -1;
         }
         return result;
+    }
+
+    public class MRCompassSensorWrapper{
+        ModernRoboticsI2cCompassSensor sensor;
+
+        MRCompassSensorWrapper(HardwareDevice device) {
+            try {
+                this.sensor = (ModernRoboticsI2cCompassSensor) device;
+            } catch (Exception e) {
+                this.sensor = null;
+            }
+        }
+
+        public double getDirection(){
+            if (sensor != null) {
+                return sensor.getDirection();
+            }
+            return -1;
+        }
+
+        public Acceleration getAcceleration(){
+            if (sensor != null) {
+                return sensor.getAcceleration();
+            }
+            return null;
+        }
+
+        public void setMode(CompassSensor.CompassMode mode){
+            if (sensor != null) {
+                sensor.setMode(mode);
+            }
+        }
+
+        public boolean calibrationFailed (){
+            if (sensor != null) {
+                return sensor.calibrationFailed();
+            }
+            return false;
+        }
+
+        public boolean isCalibrating (){
+            if (sensor != null) {
+                return sensor.isCalibrating();
+            }
+            return false;
+        }
+
+
+        public String status (){
+            if (sensor != null) {
+                return sensor.status();
+            }
+            return null;
+        }
+
+
+
+
+        public String toString() {
+            if (sensor != null) {
+                return sensor.toString();
+            }
+            return "Compass Distance sensor is null";
+        }
+
+        public String getConnectionInfo() {
+            if (sensor != null) {
+                return sensor.getConnectionInfo();
+            }
+            return null;
+        }
+
+        public int getVersion() {
+            if (sensor != null) {
+                return sensor.getVersion();
+            }
+            return 0;
+        }
+
+        public int hashCode() {
+            if (sensor != null) {
+                return sensor.hashCode();
+            }
+            return 0;
+        }
+
+
+        public String getDeviceName() {
+            if (sensor != null) {
+                return sensor.getDeviceName();
+            }
+            return "Compass Distance sensor is null";
+        }
+
+        public HardwareDevice.Manufacturer getManufacturer() {
+            if (sensor != null) {
+                return sensor.getManufacturer();
+            }
+            return null;
+        }
+
+        public void resetDeviceConfigurationForOpMode() {
+            if (sensor != null) {
+                sensor.resetDeviceConfigurationForOpMode();
+            }
+        }
+
+
     }
 
 }

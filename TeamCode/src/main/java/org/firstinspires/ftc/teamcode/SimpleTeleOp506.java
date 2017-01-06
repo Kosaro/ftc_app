@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CompassSensor;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 
 /**
  * Simple teleop for testing Drivetrain with mecanum/tank drive. Toggle with start button on gamepad 1
@@ -33,18 +36,23 @@ public class SimpleTeleOp506 extends OpMode {
         servoIsDown = false;
         currentDriveMode = DriveMode.MECANUM_RELATIVE_TO_DRIVER;
         robot.gyro.calibrate();
-        telemetry.addData("State", "Calibrating Gyro");
+        robot.compass.setMode(CompassSensor.CompassMode.CALIBRATION_MODE);
+        telemetry.addData("State", "Calibrating");
     }
 
     @Override
     public void init_loop() {
-        if (!robot.gyro.isCalibrating()) {
-            telemetry.addData("State", "Initialized");
+        //telemetry.addData("Calibration", robot.compass.calibrationFailed());
+        if (!robot.gyro.isCalibrating() && !robot.compass.isCalibrating()) {
+                telemetry.addData("State", "Initialized");
+            robot.compass.setMode(CompassSensor.CompassMode.MEASUREMENT_MODE);
         }
+
     }
 
     @Override
     public void loop() {
+        robot.compass.setMode(CompassSensor.CompassMode.MEASUREMENT_MODE);
         boolean backButtonState = gamepad1.back;
         if (backButtonState != backPreviousState) {
             if (backButtonState) {
@@ -90,6 +98,9 @@ public class SimpleTeleOp506 extends OpMode {
         telemetry.addData("Line Detected", robot.getLineDetected());
         telemetry.addData("Ultrasonic left, right", String.format("%4.2f, %4.2f", robot.leftUltrasonic.getUltrasonicLevel(), robot.rightUltrasonic.getUltrasonicLevel()));
         telemetry.addData("State", "Running");
+        Acceleration accel = robot.compass.getAcceleration();
+        telemetry.addData("Acceleration Magnitude", Math.sqrt(accel.xAccel * accel.xAccel + accel.yAccel * accel.yAccel ));
+        telemetry.addData("Acceleration",accel);
     }
 
     @Override
