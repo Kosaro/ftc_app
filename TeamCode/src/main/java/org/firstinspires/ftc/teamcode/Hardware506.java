@@ -14,13 +14,13 @@ import com.qualcomm.robotcore.util.Range;
 public class Hardware506 extends Hardware {
 
     public final static double SLIDE_SERVO_POSITION_LEFT = .47;
-    public final static double SLIDE_SERVO_POSITION_CENTER = .44;
+    public final static double SLIDE_SERVO_POSITION_CENTER = .45 ;
     public final static double SLIDE_SERVO_POSITION_RIGHT = .35;
     public final static double SLIDE_SERVO_POSITION_LEFT_LIMIT = .52;
     public final static double SLIDE_SERVO_POSITION_RIGHT_LIMIT = .25;
     final static double GEAR_RATIO = 1;
 
-    public final static double LIFT_SERVO_POSITION_UP = .28;
+    public final static double LIFT_SERVO_POSITION_UP = .225;
     public final static double LIFT_SERVO_POSITION_DOWN = .6;
     double LIGHT_THRESHHOLD = .04;
 

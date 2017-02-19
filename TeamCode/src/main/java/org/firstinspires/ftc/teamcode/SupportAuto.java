@@ -33,13 +33,22 @@ public abstract class SupportAuto extends LinearOpMode{
             idle();
         }
         robot.drive(0, 0, 0);
-        turn(90 * directonMultiplier);
+        while(((robot.gyro.getHeading() < 89) || (robot.gyro.getHeading() > 91)) && opModeIsActive()){
+            robot.drive(0,0,turn(90 * directonMultiplier));
+            idle();
+        }
         int l = robot.leftFrontMotor.getCurrentPosition();
-        while (robot.leftFrontMotor.getCurrentPosition() - l < 2500){
+        while ((robot.leftFrontMotor.getCurrentPosition() - l < 2500) && opModeIsActive()){
             robot.drive(1.0, 0.0, 0.0);
             idle();
         }
         robot.drive(0, 0, 0);
+        robot.launcherMotor.setPower(1);
+        while(opModeIsActive() && (robot.launcherMotor.getCurrentPosition() < 1120))
+        {
+            robot.launcherMotor.setPower(1);
+            idle();
+        }
         robot.launcherMotor.setPower(0);
 
     }
